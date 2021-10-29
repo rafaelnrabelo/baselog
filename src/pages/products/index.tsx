@@ -20,7 +20,6 @@ import { RiAddLine, RiPencilLine, RiDeleteBinLine } from "react-icons/ri";
 
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
-import Pagination from "../../components/Pagination";
 
 const ProductList: NextPage = () => {
   const isWideVersion = useBreakpointValue({
@@ -188,8 +187,6 @@ const ProductList: NextPage = () => {
                 </Tr>
               </Tbody>
             </Table>
-
-            <Pagination />
           </Box>
         </Flex>
       </Box>
