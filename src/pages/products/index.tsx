@@ -1,6 +1,7 @@
-import type { NextPage } from "next";
+import type { NextPage, GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   Box,
   Flex,
@@ -15,17 +16,68 @@ import {
   Tbody,
   Text,
   useBreakpointValue,
+  useToast,
 } from "@chakra-ui/react";
 import { RiAddLine, RiPencilLine, RiDeleteBinLine } from "react-icons/ri";
 
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import { api } from "../../services/api";
+import { useState } from "react";
 
-const ProductList: NextPage = () => {
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
+}
+
+interface ProductListProps {
+  baseProducts: Product[];
+}
+
+const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
+  const [products, setProducts] = useState(baseProducts || []);
+
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true,
   });
+
+  const moneyParser = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+
+  const toast = useToast();
+
+  const handleProductDelete = async (productId: string) => {
+    try {
+      await api.delete(`/products/${productId}`);
+      const newProducts = products.filter(
+        (product) => product.id !== productId
+      );
+      setProducts(newProducts);
+      toast({
+        title: "Produto removido com sucesso!",
+        status: "success",
+        duration: 9000,
+        position: "top-right",
+        isClosable: true,
+      });
+    } catch (error: any) {
+      toast({
+        title: "Falha ao remover produto, tente novamente.",
+        description: error.response.data.message,
+        status: "error",
+        duration: 9000,
+        position: "top-right",
+        isClosable: true,
+      });
+    }
+  };
 
   return (
     <>
@@ -68,123 +120,56 @@ const ProductList: NextPage = () => {
                 </Tr>
               </Thead>
               <Tbody>
-                <Tr>
-                  <Td>
-                    <Box>
-                      <Text fontWeight="bold">Arroz</Text>
-                      <Text fontSize="sm" color="gray.300">
-                        Saco de 5Kg
-                      </Text>
-                    </Box>
-                  </Td>
-                  {isWideVersion && <Td>20</Td>}
-                  {isWideVersion && <Td>R$ 20,50</Td>}
-                  {isWideVersion && <Td>R$ 39,99</Td>}
-                  {isWideVersion && (
+                {products.map((product) => (
+                  <Tr key={product.id}>
                     <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="purple"
-                        leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
-                      >
-                        Editar
-                      </Button>
+                      <Box>
+                        <Text fontWeight="bold">{product.name}</Text>
+                        {product.description && (
+                          <Text fontSize="sm" color="gray.300">
+                            {product.description}
+                          </Text>
+                        )}
+                      </Box>
                     </Td>
-                  )}
-                  {isWideVersion && (
-                    <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="red"
-                        leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                      >
-                        Deletar
-                      </Button>
-                    </Td>
-                  )}
-                </Tr>
-                <Tr>
-                  <Td>
-                    <Box>
-                      <Text fontWeight="bold">Arroz</Text>
-                      <Text fontSize="sm" color="gray.300">
-                        Saco de 5Kg
-                      </Text>
-                    </Box>
-                  </Td>
-                  {isWideVersion && <Td>20</Td>}
-                  {isWideVersion && <Td>R$ 20,50</Td>}
-                  {isWideVersion && <Td>R$ 39,99</Td>}
-                  {isWideVersion && (
-                    <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="purple"
-                        leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
-                      >
-                        Editar
-                      </Button>
-                    </Td>
-                  )}
-                  {isWideVersion && (
-                    <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="red"
-                        leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                      >
-                        Deletar
-                      </Button>
-                    </Td>
-                  )}
-                </Tr>
-                <Tr>
-                  <Td>
-                    <Box>
-                      <Text fontWeight="bold">Arroz</Text>
-                      <Text fontSize="sm" color="gray.300">
-                        Saco de 5Kg
-                      </Text>
-                    </Box>
-                  </Td>
-                  {isWideVersion && <Td>20</Td>}
-                  {isWideVersion && <Td>R$ 20,50</Td>}
-                  {isWideVersion && <Td>R$ 39,99</Td>}
-                  {isWideVersion && (
-                    <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="purple"
-                        leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
-                      >
-                        Editar
-                      </Button>
-                    </Td>
-                  )}
-                  {isWideVersion && (
-                    <Td>
-                      <Button
-                        as="a"
-                        size="sm"
-                        fontSize="sm"
-                        colorScheme="red"
-                        leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                      >
-                        Deletar
-                      </Button>
-                    </Td>
-                  )}
-                </Tr>
+                    {isWideVersion && <Td>{product.quantity}</Td>}
+                    {isWideVersion && (
+                      <Td>{moneyParser.format(product.purchasePrice)}</Td>
+                    )}
+                    {isWideVersion && (
+                      <Td>{moneyParser.format(product.salePrice)}</Td>
+                    )}
+                    {isWideVersion && (
+                      <Td>
+                        <Button
+                          as="a"
+                          size="sm"
+                          fontSize="sm"
+                          cursor="pointer"
+                          colorScheme="purple"
+                          leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
+                        >
+                          Editar
+                        </Button>
+                      </Td>
+                    )}
+                    {isWideVersion && (
+                      <Td>
+                        <Button
+                          as="a"
+                          size="sm"
+                          fontSize="sm"
+                          cursor="pointer"
+                          colorScheme="red"
+                          leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
+                          onClick={() => handleProductDelete(product.id)}
+                        >
+                          Deletar
+                        </Button>
+                      </Td>
+                    )}
+                  </Tr>
+                ))}
               </Tbody>
             </Table>
           </Box>
@@ -195,3 +180,11 @@ const ProductList: NextPage = () => {
 };
 
 export default ProductList;
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const response = await api.get<Product[]>("/products");
+
+  return {
+    props: { baseProducts: response.data },
+  };
+};
