@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import {
   Box,
   Flex,
@@ -11,6 +12,7 @@ import {
   HStack,
   SimpleGrid,
   Button,
+  useToast,
 } from "@chakra-ui/react";
 
 import Header from "../../components/Header";
@@ -35,6 +37,9 @@ const CreateProduct: NextPage = () => {
   const [salePrice, setSalePrice] = useState<number>();
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const router = useRouter();
+  const toast = useToast();
+
   const handleValidation = () => {
     const requiredData = {
       name,
@@ -58,14 +63,33 @@ const CreateProduct: NextPage = () => {
       return;
     }
 
-    const response = await api.post("/products", {
-      name,
-      description,
-      quantity,
-      purchasePrice,
-      salePrice,
-    });
-    console.log(response);
+    try {
+      await api.post("/products", {
+        name,
+        description,
+        quantity,
+        purchasePrice,
+        salePrice,
+      });
+
+      toast({
+        title: "Produto criado com sucesso!",
+        status: "success",
+        duration: 9000,
+        position: "top-right",
+        isClosable: true,
+      });
+      router.replace("/products");
+    } catch (error: any) {
+      toast({
+        title: "Falha ao criar produto, tente novamente.",
+        description: error.response.data.message,
+        status: "error",
+        duration: 9000,
+        position: "top-right",
+        isClosable: true,
+      });
+    }
   };
 
   return (
