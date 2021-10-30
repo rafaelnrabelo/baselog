@@ -54,9 +54,7 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
   const handleProductDelete = async (clienteId: string) => {
     try {
       await api.delete(`/customers/${clienteId}`);
-      const newClients = clients.filter(
-        (client) => client.id !== clienteId
-      );
+      const newClients = clients.filter((client) => client.id !== clienteId);
       setClients(newClients);
       toast({
         title: "Cliente removido com sucesso!",
@@ -109,9 +107,8 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
             <Table colorScheme="whiteAlpha">
               <Thead>
                 <Tr>
-                  <Th>Cliente</Th>
-                  {isWideVersion && <Th>Nome</Th>}
-                  {isWideVersion && <Th>E-mail</Th>}
+                  <Th>Nome</Th>
+                  <Th>E-mail</Th>
                   {isWideVersion && <Th>CPF</Th>}
                   {isWideVersion && <Th w="8"></Th>}
                 </Tr>
@@ -133,7 +130,7 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
                         <Text fontWeight="bold">{client.name}</Text>
                       </Box>
                     </Td>
-                    {isWideVersion && <Td>{client.email}</Td>}
+                    <Td>{client.email}</Td>
                     {isWideVersion && <Td>{client.cpf}</Td>}
                     {isWideVersion && (
                       <Td>
