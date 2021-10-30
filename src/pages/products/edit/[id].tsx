@@ -80,6 +80,7 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
       setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     try {
       await api.put(`/products/${product.id}`, {
