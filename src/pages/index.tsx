@@ -1,7 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import dynamic from "next/dynamic";
-import { Box, Flex, SimpleGrid, Text, theme } from "@chakra-ui/react";
+import { Box, Flex, VStack, Text, theme } from "@chakra-ui/react";
 import { ApexOptions } from "apexcharts";
 
 const Chart = dynamic(() => import("react-apexcharts"), {
@@ -78,30 +78,42 @@ const Dashboard: NextPage = () => {
         <Flex w="100%" mb="6" maxW={1480} mx="auto" px="6">
           <Sidebar />
 
-          <SimpleGrid flex="1" gap="4" minChildWidth="320px" align="flex-start">
-            <Box p={["6", "8"]} bg="gray.800" borderRadius={8} pb="4">
+          <VStack flex="1" align="flex-start" mb="4">
+            <Box
+              p={["6", "8"]}
+              bg="gray.800"
+              borderRadius={8}
+              pb="4"
+              w={{ "2xl": "100%", xl: "90%" }}
+              mb="4"
+            >
               <Text fontSize="lg" mb="4">
                 Inscritos da semana
               </Text>
               <Chart
                 type="area"
-                height={160}
+                height={250}
                 options={options}
                 series={series}
               />
             </Box>
-            <Box p={["6", "8"]} bg="gray.800" borderRadius={8}>
+            <Box
+              p={["6", "8"]}
+              bg="gray.800"
+              borderRadius={8}
+              w={{ "2xl": "100%", xl: "90%" }}
+            >
               <Text fontSize="lg" mb="4">
                 Taxa de abertura
               </Text>
               <Chart
                 type="area"
-                height={160}
+                height={250}
                 options={options}
                 series={series}
               />
             </Box>
-          </SimpleGrid>
+          </VStack>
         </Flex>
       </Flex>
     </>
