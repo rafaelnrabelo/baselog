@@ -1,10 +1,10 @@
 import { Flex, IconButton, Icon, useBreakpointValue } from "@chakra-ui/react";
 import { RiMenuLine } from "react-icons/ri";
 
-import Logo from "./Logo";
+import { Logo } from "./Logo";
 import { useSideBarDrawer } from "../../contexts/SidebarDrawerContext";
 
-const Header: React.FC = () => {
+export const Header: React.FC = () => {
   const { onOpen } = useSideBarDrawer();
 
   const isWideVersion = useBreakpointValue({
@@ -38,5 +38,3 @@ const Header: React.FC = () => {
     </Flex>
   );
 };
-
-export default Header;

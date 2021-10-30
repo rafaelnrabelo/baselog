@@ -1,7 +1,7 @@
 import { ElementType } from "react";
 import { Text, Icon, Link as ChakraLink, LinkProps } from "@chakra-ui/react";
 
-import ActiveLink from "../ActiveLink";
+import { ActiveLink } from "../ActiveLink";
 
 interface NavLinkProps extends LinkProps {
   label: string;
@@ -9,7 +9,7 @@ interface NavLinkProps extends LinkProps {
   shouldMatchExactHref?: boolean;
 }
 
-const NavLink: React.FC<NavLinkProps> = ({
+export const NavLink: React.FC<NavLinkProps> = ({
   icon,
   label,
   href,
@@ -31,5 +31,3 @@ const NavLink: React.FC<NavLinkProps> = ({
     </ActiveLink>
   );
 };
-
-export default NavLink;

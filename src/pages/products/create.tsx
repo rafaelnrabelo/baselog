@@ -16,9 +16,10 @@ import {
   SimpleGrid,
 } from "@chakra-ui/react";
 import { RiSaveLine } from "react-icons/ri";
+import validator from "validator";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import { Header } from "../../components/Header";
+import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 
@@ -50,10 +51,27 @@ const CreateProduct: NextPage = () => {
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
-      if (!requiredData[key as keyof typeof requiredData]) {
+      if (
+        validator.isEmpty(
+          String(requiredData[key as keyof typeof requiredData] || "")
+        )
+      ) {
         newErrors[key as keyof FormErrors] = true;
       }
     });
+
+    if (!validator.isInt(String(quantity || ""))) {
+      newErrors.quantity = true;
+    }
+
+    if (!validator.isNumeric(String(purchasePrice || ""))) {
+      newErrors.purchasePrice = true;
+    }
+
+    if (!validator.isNumeric(String(salePrice || ""))) {
+      newErrors.salePrice = true;
+    }
+
     return newErrors;
   };
 

@@ -20,8 +20,8 @@ import {
 } from "@chakra-ui/react";
 import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import { Header } from "../../components/Header";
+import { Sidebar } from "../../components/Sidebar";
 import { api } from "../../services/api";
 import { useState } from "react";
 
@@ -125,11 +125,7 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
                     }}
                     onClick={() => router.push(`/clients/${client.id}`)}
                   >
-                    <Td>
-                      <Box>
-                        <Text fontWeight="bold">{client.name}</Text>
-                      </Box>
-                    </Td>
+                    <Td fontWeight="bold">{client.name}</Td>
                     <Td>{client.email}</Td>
                     {isWideVersion && <Td>{client.cpf}</Td>}
                     {isWideVersion && (

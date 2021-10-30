@@ -12,8 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { RiPencilLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import { Header } from "../../components/Header";
+import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 

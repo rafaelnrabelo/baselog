@@ -4,7 +4,7 @@ interface NavSectionProps {
   title: string;
 }
 
-const NavSection: React.FC<NavSectionProps> = ({ title, children }) => {
+export const NavSection: React.FC<NavSectionProps> = ({ title, children }) => {
   return (
     <Box>
       <Text fontWeight="bold" color="gray.400" fontSize="small">
@@ -16,5 +16,3 @@ const NavSection: React.FC<NavSectionProps> = ({ title, children }) => {
     </Box>
   );
 };
-
-export default NavSection;

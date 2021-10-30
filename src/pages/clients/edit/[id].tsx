@@ -16,9 +16,10 @@ import {
   SimpleGrid,
 } from "@chakra-ui/react";
 import { RiSaveLine } from "react-icons/ri";
+import validator from "validator";
 
-import Header from "../../../components/Header";
-import Sidebar from "../../../components/Sidebar";
+import { Header } from "../../../components/Header";
+import { Sidebar } from "../../../components/Sidebar";
 import { Input } from "../../../components/Form/Input";
 import { api } from "../../../services/api";
 import { Select } from "../../../components/Form/Select";
@@ -80,10 +81,27 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
-      if (!requiredData[key as keyof typeof requiredData]) {
+      if (
+        validator.isEmpty(requiredData[key as keyof typeof requiredData] || "")
+      ) {
         newErrors[key as keyof FormErrors] = true;
       }
     });
+
+    if (!validator.isMobilePhone(phone || "", "pt-BR")) {
+      newErrors.phone = true;
+    }
+
+    if (!validator.isEmail(email || "")) {
+      newErrors.email = true;
+    }
+
+    if (
+      !validator.isLength((cpf || "").replace(/_/g, ""), { min: 14, max: 14 })
+    ) {
+      newErrors.cpf = true;
+    }
+
     return newErrors;
   };
 
@@ -172,6 +190,7 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
                 <Input
                   name="cpf"
                   label="CPF *"
+                  mask="999.999.999-99"
                   value={cpf}
                   onChange={(e) => setCpf(e.target.value)}
                   isInvalid={errors.email}
@@ -198,6 +217,7 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
                 <Input
                   name="phone"
                   label="Telefone *"
+                  mask="(99) 99999-9999"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   isInvalid={errors.phone}

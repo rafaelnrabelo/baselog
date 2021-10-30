@@ -4,10 +4,12 @@ import {
   FormLabel,
   FormControl,
 } from "@chakra-ui/react";
+import InputMask from "react-input-mask";
 
 interface InputProps extends ChakraInputProps {
   name: string;
   label?: string;
+  mask?: string;
 }
 
 export const Input: React.FC<InputProps> = ({
@@ -28,6 +30,7 @@ export const Input: React.FC<InputProps> = ({
         </FormLabel>
       )}
       <ChakraInput
+        as={InputMask}
         id={name}
         name={name}
         isReadOnly={isReadOnly}

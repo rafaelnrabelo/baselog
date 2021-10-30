@@ -6,10 +6,10 @@ import {
   RiArchiveLine,
 } from "react-icons/ri";
 
-import NavLink from "./NavLink";
-import NavSection from "./NavSection";
+import { NavLink } from "./NavLink";
+import { NavSection } from "./NavSection";
 
-const SidebarNav: React.FC = () => {
+export const SidebarNav: React.FC = () => {
   return (
     <Stack spacing="12" align="flex-start">
       <NavSection title="GERAL">
@@ -30,5 +30,3 @@ const SidebarNav: React.FC = () => {
     </Stack>
   );
 };
-
-export default SidebarNav;

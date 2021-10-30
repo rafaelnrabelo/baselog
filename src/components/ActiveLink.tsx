@@ -7,7 +7,7 @@ interface ActiveLinkProps extends LinkProps {
   shouldMatchExactHref?: boolean;
 }
 
-const ActiveLink: React.FC<ActiveLinkProps> = ({
+export const ActiveLink: React.FC<ActiveLinkProps> = ({
   children,
   shouldMatchExactHref = false,
   ...props
@@ -33,5 +33,3 @@ const ActiveLink: React.FC<ActiveLinkProps> = ({
     </Link>
   );
 };
-
-export default ActiveLink;

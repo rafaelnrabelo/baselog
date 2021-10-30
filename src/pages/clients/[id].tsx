@@ -12,8 +12,8 @@ import {
 } from "@chakra-ui/react";
 import { RiPencilLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import { Header } from "../../components/Header";
+import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 import { Select } from "../../components/Form/Select";
@@ -80,6 +80,7 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
                 <Input
                   name="cpf"
                   label="CPF"
+                  mask="999.999.999-99"
                   isRequired
                   value={client.cpf}
                   isReadOnly
@@ -108,6 +109,7 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
                 <Input
                   name="phone"
                   label="Telefone"
+                  mask="(99) 99999-9999"
                   isRequired
                   value={client.phone}
                   isReadOnly

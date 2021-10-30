@@ -20,8 +20,8 @@ import {
 } from "@chakra-ui/react";
 import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
+import { Header } from "../../components/Header";
+import { Sidebar } from "../../components/Sidebar";
 import { api } from "../../services/api";
 import { useState } from "react";
 

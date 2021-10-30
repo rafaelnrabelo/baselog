@@ -10,9 +10,9 @@ import {
 } from "@chakra-ui/react";
 import { useSideBarDrawer } from "../../contexts/SidebarDrawerContext";
 
-import SidebarNav from "./SidebarNav";
+import { SidebarNav } from "./SidebarNav";
 
-const Sidebar: React.FC = () => {
+export const Sidebar: React.FC = () => {
   const { isOpen, onClose } = useSideBarDrawer();
 
   const isDrawerSidebar = useBreakpointValue({
@@ -43,5 +43,3 @@ const Sidebar: React.FC = () => {
     </Box>
   );
 };
-
-export default Sidebar;
