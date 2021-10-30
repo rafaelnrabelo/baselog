@@ -48,11 +48,6 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
     lg: true,
   });
 
-  const moneyParser = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
-
   const toast = useToast();
   const router = useRouter();
 

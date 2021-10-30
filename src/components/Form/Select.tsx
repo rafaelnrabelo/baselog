@@ -31,7 +31,7 @@ export const Select: React.FC<SelectProps> = ({
       <SelectInput
         id={name}
         name={name}
-        isReadOnly={isReadOnly}
+        disabled={isReadOnly}
         focusBorderColor={isReadOnly ? "gray.900" : "blue.500"}
         bg={isReadOnly ? "gray.800" : "gray.900"}
         borderBottom={
