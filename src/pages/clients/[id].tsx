@@ -34,6 +34,12 @@ interface ShowClientProps {
 }
 
 const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
+
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return `${d.getDate()+1}/${d.getMonth()+1}/${d.getFullYear()}`;
+  }
+
   return (
     <>
       <Head>
@@ -75,7 +81,7 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
                   name="birthDate"
                   label="Data de nascimento"
                   isRequired
-                  value={client.birthDate}
+                  value={formatDate(client.birthDate)}
                   isReadOnly
                 />
               </SimpleGrid>
