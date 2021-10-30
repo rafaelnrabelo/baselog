@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -17,31 +17,42 @@ import {
 } from "@chakra-ui/react";
 import { RiSaveLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
-import { Input } from "../../components/Form/Input";
+import Header from "../../../components/Header";
+import Sidebar from "../../../components/Sidebar";
+import { Input } from "../../../components/Form/Input";
+import { api } from "../../../services/api";
 
-import { Select } from "../../components/Form/Select";
-import { api } from "../../services/api";
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
+}
+
+interface EditProductProps {
+  product: Product;
+}
 
 interface FormErrors {
   name?: boolean;
-  email?: boolean;
-  cpf?: boolean;
-  birthDate?: boolean;
-  phone?: boolean;
-  gender?: boolean;
-  address?: boolean;
+  description?: boolean;
+  quantity?: boolean;
+  purchasePrice?: boolean;
+  salePrice?: boolean;
 }
 
-const CreateClient: NextPage = () => {
-  const [name, setName] = useState<string>();
-  const [email, setEmail] = useState<string>();
-  const [cpf, setCpf] = useState<string>();
-  const [birthDate, setBirthDate] = useState<string>();
-  const [phone, setPhone] = useState<string>();
-  const [gender, setGender] = useState<string>();
-  const [address, setAddress] = useState<string>();
+const EditProduct: NextPage<EditProductProps> = ({ product }) => {
+  const [name, setName] = useState<string>(product.name);
+  const [description, setDescription] = useState<string>(
+    product?.description || ""
+  );
+  const [quantity, setQuantity] = useState<number>(product.quantity);
+  const [purchasePrice, setPurchasePrice] = useState<number>(
+    product.purchasePrice
+  );
+  const [salePrice, setSalePrice] = useState<number>(product.salePrice);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const router = useRouter();
@@ -50,12 +61,9 @@ const CreateClient: NextPage = () => {
   const handleValidation = () => {
     const requiredData = {
       name,
-      email,
-      cpf,
-      birthDate,
-      phone,
-      gender,
-      address,
+      quantity,
+      purchasePrice,
+      salePrice,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -72,30 +80,28 @@ const CreateClient: NextPage = () => {
       setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     try {
-      await api.post("/customers", {
+      await api.put(`/products/${product.id}`, {
         name,
-        email,
-        cpf,
-        birthDate,
-        phone,
-        gender,
-        address,
+        description,
+        quantity,
+        purchasePrice,
+        salePrice,
       });
 
       toast({
-        title: "Cliente criado com sucesso!",
+        title: "Produto atualizado com sucesso!",
         status: "success",
         duration: 9000,
         position: "top-right",
         isClosable: true,
       });
-
-      router.replace("/clients");
+      router.replace(`/products/${product.id}`);
     } catch (error: any) {
       toast({
-        title: "Falha ao criar cliente, tente novamente.",
+        title: "Falha ao atualizar produto, tente novamente.",
         description: error.response.data.message,
         status: "error",
         duration: 9000,
@@ -105,16 +111,10 @@ const CreateClient: NextPage = () => {
     }
   };
 
-  const genderOptions = [
-    { value: "MALE", label: "Masculino" },
-    { value: "FEMALE", label: "Feminino" },
-    { value: "OTHER", label: "Outros" },
-  ];
-
   return (
     <>
       <Head>
-        <title>Criar Cliente | baselog</title>
+        <title>Editar Produto | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -124,7 +124,7 @@ const CreateClient: NextPage = () => {
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
             <Heading size="lg" fontWeight="normal">
-              Criar Cliente
+              Editar Produto
             </Heading>
 
             <Divider my="6" borderColor="gray.700" />
@@ -140,61 +140,46 @@ const CreateClient: NextPage = () => {
                   isInvalid={errors.name}
                 />
                 <Input
-                  name="email"
-                  label="E-mail *"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  isInvalid={errors.email}
+                  name="quantity"
+                  label="Quantidade em Estoque *"
+                  type="number"
+                  value={quantity}
+                  onChange={(e) => setQuantity(Number(e.target.value))}
+                  isInvalid={errors.quantity}
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="cpf"
-                  label="CPF *"
-                  value={cpf}
-                  onChange={(e) => setCpf(e.target.value)}
-                  isInvalid={errors.email}
-                />
-                <Input
-                  name="birthDate"
-                  label="Data de nascimento *"
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  isInvalid={errors.birthDate}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Select
-                  name="gender"
-                  label="Gênero *"
-                  value={gender}
-                  onChange={(e) => setGender(e.target.value)}
-                  options={genderOptions}
-                  isInvalid={errors.gender}
-                />
-                <Input
-                  name="phone"
-                  label="Telefone *"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  isInvalid={errors.phone}
+                  name="description"
+                  label="Descrição"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  isInvalid={errors.description}
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="address"
-                  label="Endereço *"
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  isInvalid={errors.address}
+                  name="purchasePrice"
+                  label="Preço de Compra *"
+                  type="number"
+                  value={purchasePrice}
+                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                  isInvalid={errors.purchasePrice}
+                />
+                <Input
+                  name="salePrice"
+                  label="Preço de Venda *"
+                  type="number"
+                  value={salePrice}
+                  onChange={(e) => setSalePrice(Number(e.target.value))}
+                  isInvalid={errors.salePrice}
                 />
               </SimpleGrid>
             </VStack>
 
             <Flex mt="8" justify="flex-end">
               <HStack spacing="4">
-                <Link href="/clients" passHref>
+                <Link href={`/products/${product.id}`} passHref>
                   <Button colorScheme="whiteAlpha" as="a">
                     Cancelar
                   </Button>
@@ -215,4 +200,20 @@ const CreateClient: NextPage = () => {
   );
 };
 
-export default CreateClient;
+export default EditProduct;
+
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  try {
+    const id = params?.id;
+    const response = await api.get<Product>(`/products/${id}`);
+
+    return {
+      props: { product: response.data },
+    };
+  } catch {
+    return {
+      props: {},
+      notFound: true,
+    };
+  }
+};

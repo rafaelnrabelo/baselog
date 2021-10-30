@@ -16,41 +16,30 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
-import { Select } from "../../components/Form/Select";
 
-interface Client {
+interface Product {
   id: string;
   name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
 }
 
-interface ShowClientProps {
-  client: Client;
+interface ShowProductProps {
+  product: Product;
 }
 
-const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
-      -2
-    )}/${d.getFullYear()}`;
-  };
-
-  const genderOptions = [
-    { value: "MALE", label: "Masculino" },
-    { value: "FEMALE", label: "Feminino" },
-    { value: "OTHER", label: "Outros" },
-  ];
+const ShowProduct: NextPage<ShowProductProps> = ({ product }) => {
+  const moneyParser = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
 
   return (
     <>
       <Head>
-        <title>{client.name} | baselog</title>
+        <title>{product.name} | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -65,73 +54,48 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
                   name="name"
                   label="Nome"
                   isRequired
-                  value={client.name}
+                  value={product.name}
                   isReadOnly
                 />
                 <Input
-                  name="email"
-                  label="E-mail"
-                  isRequired
-                  value={client.email}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="cpf"
-                  label="CPF"
-                  isRequired
-                  value={client.cpf}
-                  isReadOnly
-                />
-                <Input
-                  name="birthDate"
-                  label="Data de nascimento"
-                  isRequired
-                  value={formatDate(client.birthDate)}
+                  name="quantity"
+                  label="Quantidade em Estoque"
+                  value={product.quantity}
                   isReadOnly
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="gender"
-                  label="Gênero"
-                  value={
-                    genderOptions.find(
-                      (gender) => gender.value === client.gender
-                    )?.label
-                  }
-                  isReadOnly
-                  isRequired
-                />
-
-                <Input
-                  name="phone"
-                  label="Telefone"
-                  isRequired
-                  value={client.phone}
+                  name="description"
+                  label="Descrição"
+                  value={product.description}
                   isReadOnly
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="address"
-                  label="Endereço *"
-                  value={client.address}
+                  name="purchasePrice"
+                  label="Preço de Compra"
+                  value={moneyParser.format(product.purchasePrice)}
                   isReadOnly
-                  isRequired
+                />
+                <Input
+                  name="salePrice"
+                  label="Preço de Venda"
+                  value={moneyParser.format(product.salePrice)}
+                  isReadOnly
                 />
               </SimpleGrid>
             </VStack>
 
             <Flex mt="8" justify="flex-end">
               <HStack spacing="4">
-                <Link href="/clients" passHref>
+                <Link href="/products" passHref>
                   <Button colorScheme="whiteAlpha" as="a">
                     Voltar
                   </Button>
                 </Link>
-                <Link href={`/clients/edit/${client.id}`} passHref>
+                <Link href={`/products/edit/${product.id}`} passHref>
                   <Button
                     as="a"
                     colorScheme="green"
@@ -149,15 +113,15 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
   );
 };
 
-export default ShowClient;
+export default ShowProduct;
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   try {
     const id = params?.id;
-    const response = await api.get<Client>(`/customers/${id}`);
+    const response = await api.get<Product>(`/products/${id}`);
 
     return {
-      props: { client: response.data },
+      props: { product: response.data },
     };
   } catch {
     return {

@@ -127,9 +127,9 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
   };
 
   const genderOptions = [
-    { value: "male", label: "Masculino" },
-    { value: "female", label: "Feminino" },
-    { value: "other", label: "Outros" },
+    { value: "MALE", label: "Masculino" },
+    { value: "FEMALE", label: "Feminino" },
+    { value: "OTHER", label: "Outros" },
   ];
 
   return (
