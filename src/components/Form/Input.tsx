@@ -41,7 +41,7 @@ export const Input: React.FC<InputProps> = ({
         borderRadius={isReadOnly ? 0 : undefined}
         variant="filled"
         _hover={{ bg: isReadOnly ? "gray.800" : "gray.900" }}
-        _focus={isReadOnly ? { bg: "gray.800" } : {}}
+        _focus={isReadOnly ? { bg: "gray.800" } : undefined}
         size="lg"
         {...inputProps}
       />
