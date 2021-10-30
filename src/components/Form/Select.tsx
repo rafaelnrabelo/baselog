@@ -56,6 +56,10 @@ export const Select: React.FC<SelectProps> = ({
         size="lg"
         {...selectProps}
       >
+        <option value="" key="first">
+          {" "}
+          Selecione uma opção{" "}
+        </option>
         {options?.map((option) => (
           <option
             style={{

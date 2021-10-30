@@ -21,7 +21,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 
-import { Select }  from '../../components/Form/Select';
+import { Select } from "../../components/Form/Select";
 import { api } from "../../services/api";
 
 interface FormErrors {
@@ -35,7 +35,6 @@ interface FormErrors {
 }
 
 const CreateClient: NextPage = () => {
-
   const [name, setName] = useState<string>();
   const [email, setEmail] = useState<string>();
   const [cpf, setCpf] = useState<string>();
@@ -56,7 +55,7 @@ const CreateClient: NextPage = () => {
       birthDate,
       phone,
       gender,
-      address
+      address,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -82,7 +81,7 @@ const CreateClient: NextPage = () => {
         birthDate,
         phone,
         gender,
-        address
+        address,
       });
 
       toast({
@@ -94,7 +93,6 @@ const CreateClient: NextPage = () => {
       });
 
       router.replace("/clients");
-
     } catch (error: any) {
       toast({
         title: "Falha ao criar cliente, tente novamente.",
@@ -106,6 +104,12 @@ const CreateClient: NextPage = () => {
       });
     }
   };
+
+  const genderOptions = [
+    { value: "male", label: "Masculino" },
+    { value: "female", label: "Feminino" },
+    { value: "other", label: "Outros" },
+  ];
 
   return (
     <>
@@ -166,13 +170,9 @@ const CreateClient: NextPage = () => {
                   label="Gênero *"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
+                  options={genderOptions}
                   isInvalid={errors.gender}
-                >
-                  <option value="" key="first" > Selecione uma opção </option>
-                  <option value="male" key="male" > Masculino </option>
-                  <option value="female" key="female" > Feminino </option>
-                  <option value="other" key="other" > Outros </option>
-                </Select>
+                />
                 <Input
                   name="phone"
                   label="Telefone *"

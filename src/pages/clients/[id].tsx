@@ -34,11 +34,18 @@ interface ShowClientProps {
 }
 
 const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
-
   const formatDate = (date: string) => {
     const d = new Date(date);
-    return `${d.getDate()+1}/${d.getMonth()+1}/${d.getFullYear()}`;
-  }
+    return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
+      -2
+    )}/${d.getFullYear()}`;
+  };
+
+  const genderOptions = [
+    { value: "male", label: "Masculino" },
+    { value: "female", label: "Feminino" },
+    { value: "other", label: "Outros" },
+  ];
 
   return (
     <>
@@ -86,18 +93,17 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Select
+                <Input
                   name="gender"
                   label="Gênero"
-                  value={client.gender}
+                  value={
+                    genderOptions.find(
+                      (gender) => gender.value === client.gender
+                    )?.label
+                  }
                   isReadOnly
                   isRequired
-                >
-                  <option value="" key="first" > Selecione uma opção </option>
-                  <option value="male" key="male" > Masculino </option>
-                  <option value="female" key="female" > Feminino </option>
-                  <option value="other" key="other" > Outros </option>
-                </Select>
+                />
 
                 <Input
                   name="phone"

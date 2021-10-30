@@ -63,8 +63,10 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
 
   const formatDate = (date: string) => {
     const d = new Date(date);
-    return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()+1}`;
-  }
+    return `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${
+      d.getDate() + 1
+    }`;
+  };
 
   const handleValidation = () => {
     const requiredData = {
@@ -74,7 +76,7 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
       birthDate,
       phone,
       gender,
-      address
+      address,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -100,7 +102,7 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
         birthDate,
         phone,
         gender,
-        address
+        address,
       });
 
       toast({
@@ -112,7 +114,6 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
       });
 
       router.replace(`/clients/${client.id}`);
-
     } catch (error: any) {
       toast({
         title: "Falha ao atualizar cliente, tente novamente.",
@@ -124,6 +125,12 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
       });
     }
   };
+
+  const genderOptions = [
+    { value: "male", label: "Masculino" },
+    { value: "female", label: "Feminino" },
+    { value: "other", label: "Outros" },
+  ];
 
   return (
     <>
@@ -184,13 +191,10 @@ const EditClient: NextPage<EditClientProps> = ({ client }) => {
                   label="Gênero *"
                   value={gender}
                   onChange={(e) => setGender(e.target.value)}
+                  options={genderOptions}
                   isInvalid={errors.gender}
-                >
-                  <option value="" key="first" > Selecione uma opção </option>
-                  <option value="male" key="male" > Masculino </option>
-                  <option value="female" key="female" > Feminino </option>
-                  <option value="other" key="other" > Outros </option>
-                </Select>
+                />
+
                 <Input
                   name="phone"
                   label="Telefone *"
