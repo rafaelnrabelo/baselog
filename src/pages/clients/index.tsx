@@ -37,9 +37,9 @@ const UserList: NextPage = () => {
         <Box flex="1" borderRadius={8} bg="gray.800" p="8">
           <Flex mb="8" justify="space-between" align="center">
             <Heading size="lg" fontWeight="normal">
-              Usuários
+              Clientes
             </Heading>
-            <Link href="/users/create" passHref>
+            <Link href="/clients/create" passHref>
               <Button
                 as="a"
                 size="sm"
