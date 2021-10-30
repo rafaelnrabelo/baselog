@@ -2,8 +2,7 @@ import { Stack } from "@chakra-ui/react";
 import {
   RiContactsLine,
   RiDashboardLine,
-  RiGitMergeLine,
-  RiInputMethodLine,
+  RiExchangeBoxLine,
   RiArchiveLine,
 } from "react-icons/ri";
 
@@ -20,12 +19,13 @@ const SidebarNav: React.FC = () => {
           href="/"
           shouldMatchExactHref
         />
-        <NavLink icon={RiContactsLine} label="Usuários" href="/users" />
-        <NavLink icon={RiArchiveLine} label="Produtos" href="/products" />
       </NavSection>
-      <NavSection title="AUTOMAÇÃO">
-        <NavLink icon={RiInputMethodLine} href="/forms" label="Formulários" />
-        <NavLink icon={RiGitMergeLine} href="/automations" label="Automação" />
+      <NavSection title="GERENCIAMENTO">
+        <NavLink icon={RiArchiveLine} label="Produtos" href="/products" />
+        <NavLink icon={RiExchangeBoxLine} label="Vendas" href="/sales" />
+      </NavSection>
+      <NavSection title="PESSOAS">
+        <NavLink icon={RiContactsLine} label="Clientes" href="/clients" />
       </NavSection>
     </Stack>
   );

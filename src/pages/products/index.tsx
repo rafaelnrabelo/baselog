@@ -18,7 +18,7 @@ import {
   useBreakpointValue,
   useToast,
 } from "@chakra-ui/react";
-import { RiAddLine, RiPencilLine, RiDeleteBinLine } from "react-icons/ri";
+import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
@@ -52,6 +52,7 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
   });
 
   const toast = useToast();
+  const router = useRouter();
 
   const handleProductDelete = async (productId: string) => {
     try {
@@ -116,12 +117,20 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
                   {isWideVersion && <Th>Preço de Compra</Th>}
                   {isWideVersion && <Th>Preço de Venda</Th>}
                   {isWideVersion && <Th w="8"></Th>}
-                  {isWideVersion && <Th w="8"></Th>}
                 </Tr>
               </Thead>
               <Tbody>
                 {products.map((product) => (
-                  <Tr key={product.id}>
+                  <Tr
+                    key={product.id}
+                    role="link"
+                    cursor="pointer"
+                    transition="backdrop-filter 0.2s"
+                    _hover={{
+                      backdropFilter: "brightness(1.15)",
+                    }}
+                    onClick={() => router.push(`/products/${product.id}`)}
+                  >
                     <Td>
                       <Box>
                         <Text fontWeight="bold">{product.name}</Text>
@@ -146,23 +155,12 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
                           size="sm"
                           fontSize="sm"
                           cursor="pointer"
-                          colorScheme="purple"
-                          leftIcon={<Icon as={RiPencilLine} fontSize="16" />}
-                        >
-                          Editar
-                        </Button>
-                      </Td>
-                    )}
-                    {isWideVersion && (
-                      <Td>
-                        <Button
-                          as="a"
-                          size="sm"
-                          fontSize="sm"
-                          cursor="pointer"
                           colorScheme="red"
                           leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                          onClick={() => handleProductDelete(product.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleProductDelete(product.id);
+                          }}
                         >
                           Deletar
                         </Button>

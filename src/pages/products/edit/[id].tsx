@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { NextPage } from "next";
+import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -17,10 +17,23 @@ import {
 } from "@chakra-ui/react";
 import { RiSaveLine } from "react-icons/ri";
 
-import Header from "../../components/Header";
-import Sidebar from "../../components/Sidebar";
-import { Input } from "../../components/Form/Input";
-import { api } from "../../services/api";
+import Header from "../../../components/Header";
+import Sidebar from "../../../components/Sidebar";
+import { Input } from "../../../components/Form/Input";
+import { api } from "../../../services/api";
+
+interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
+}
+
+interface EditProductProps {
+  product: Product;
+}
 
 interface FormErrors {
   name?: boolean;
@@ -30,12 +43,16 @@ interface FormErrors {
   salePrice?: boolean;
 }
 
-const CreateProduct: NextPage = () => {
-  const [name, setName] = useState<string>();
-  const [description, setDescription] = useState<string>();
-  const [quantity, setQuantity] = useState<number>();
-  const [purchasePrice, setPurchasePrice] = useState<number>();
-  const [salePrice, setSalePrice] = useState<number>();
+const EditProduct: NextPage<EditProductProps> = ({ product }) => {
+  const [name, setName] = useState<string>(product.name);
+  const [description, setDescription] = useState<string>(
+    product?.description || ""
+  );
+  const [quantity, setQuantity] = useState<number>(product.quantity);
+  const [purchasePrice, setPurchasePrice] = useState<number>(
+    product.purchasePrice
+  );
+  const [salePrice, setSalePrice] = useState<number>(product.salePrice);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const router = useRouter();
@@ -65,7 +82,7 @@ const CreateProduct: NextPage = () => {
     }
 
     try {
-      await api.post("/products", {
+      await api.put(`/products/${product.id}`, {
         name,
         description,
         quantity,
@@ -74,16 +91,16 @@ const CreateProduct: NextPage = () => {
       });
 
       toast({
-        title: "Produto criado com sucesso!",
+        title: "Produto atualizado com sucesso!",
         status: "success",
         duration: 9000,
         position: "top-right",
         isClosable: true,
       });
-      router.replace("/products");
+      router.replace(`/products/${product.id}`);
     } catch (error: any) {
       toast({
-        title: "Falha ao criar produto, tente novamente.",
+        title: "Falha ao atualizar produto, tente novamente.",
         description: error.response.data.message,
         status: "error",
         duration: 9000,
@@ -96,7 +113,7 @@ const CreateProduct: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Criar Produto | baselog</title>
+        <title>Editar Produto | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -106,7 +123,7 @@ const CreateProduct: NextPage = () => {
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
             <Heading size="lg" fontWeight="normal">
-              Criar Produto
+              Editar Produto
             </Heading>
 
             <Divider my="6" borderColor="gray.700" />
@@ -161,7 +178,7 @@ const CreateProduct: NextPage = () => {
 
             <Flex mt="8" justify="flex-end">
               <HStack spacing="4">
-                <Link href="/products" passHref>
+                <Link href={`/products/${product.id}`} passHref>
                   <Button colorScheme="whiteAlpha" as="a">
                     Cancelar
                   </Button>
@@ -182,4 +199,20 @@ const CreateProduct: NextPage = () => {
   );
 };
 
-export default CreateProduct;
+export default EditProduct;
+
+export const getServerSideProps: GetServerSideProps = async ({ params }) => {
+  try {
+    const id = params?.id;
+    const response = await api.get<Product>(`/products/${id}`);
+
+    return {
+      props: { product: response.data },
+    };
+  } catch {
+    return {
+      props: {},
+      notFound: true,
+    };
+  }
+};
