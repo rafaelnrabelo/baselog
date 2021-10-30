@@ -2,7 +2,7 @@ import { Stack } from "@chakra-ui/react";
 import {
   RiContactsLine,
   RiDashboardLine,
-  RiExchangeBoxLine,
+  RiShoppingCartLine,
   RiArchiveLine,
 } from "react-icons/ri";
 
@@ -22,7 +22,7 @@ const SidebarNav: React.FC = () => {
       </NavSection>
       <NavSection title="GERENCIAMENTO">
         <NavLink icon={RiArchiveLine} label="Produtos" href="/products" />
-        <NavLink icon={RiExchangeBoxLine} label="Vendas" href="/sales" />
+        <NavLink icon={RiShoppingCartLine} label="Vendas" href="/sales" />
       </NavSection>
       <NavSection title="PESSOAS">
         <NavLink icon={RiContactsLine} label="Clientes" href="/clients" />
