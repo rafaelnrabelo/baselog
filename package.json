@@ -12,8 +12,6 @@
     "@chakra-ui/react": "^1.6.8",
     "@emotion/react": "^11",
     "@emotion/styled": "^11",
-    "@types/react-input-mask": "^3.0.1",
-    "@types/validator": "^13.6.6",
     "apexcharts": "^3.28.3",
     "axios": "^0.24.0",
     "framer-motion": "^4",
@@ -26,6 +24,8 @@
     "validator": "^13.6.0"
   },
   "devDependencies": {
+    "@types/react-input-mask": "^3.0.1",
+    "@types/validator": "^13.6.6",
     "@types/react": "17.0.25",
     "eslint": "7.32.0",
     "eslint-config-next": "11.1.2",
