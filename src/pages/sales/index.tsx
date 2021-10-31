@@ -119,7 +119,7 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
               <Heading size="lg" fontWeight="normal">
                 Vendas
               </Heading>
-              <Link href="/products/create" passHref>
+              <Link href="/sales/create" passHref>
                 <Button
                   as="a"
                   size="sm"

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import type { NextPage } from "next";
+import type { NextPage, GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -23,20 +23,47 @@ import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 
+import { Select } from '../../components/Form/Select'
 interface FormErrors {
-  name?: boolean;
-  description?: boolean;
+  productId?: boolean;
+  customerId?: boolean;
+  saleDate?: boolean;
   quantity?: boolean;
-  purchasePrice?: boolean;
-  salePrice?: boolean;
 }
 
-const CreateProduct: NextPage = () => {
-  const [name, setName] = useState<string>();
-  const [description, setDescription] = useState<string>();
+interface Client {
+  id: string
+  name: string
+  email: string
+  cpf: string
+  birthDate: string
+  gender: string
+  phone: string
+  address: string
+}
+
+interface Product {
+  id: string
+  name: string
+  description?: string
+  purchasePrice: number
+  salePrice: number
+  quantity: number
+}
+interface SalesListProps {
+  baseProducts: Product[];
+  baseClients: Client[];
+}
+
+const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) => {
+  const [clients] = useState<Client[]>(baseClients || []);
+  const [products] = useState<Product[]>(baseProducts || []);
+
+  const [productId, setProductId] = useState<string>();
+  const [customerId, setCustomerId] = useState<string>();
+  const [saleDate, setSaleDate] = useState<string>();
   const [quantity, setQuantity] = useState<number>();
-  const [purchasePrice, setPurchasePrice] = useState<number>();
-  const [salePrice, setSalePrice] = useState<number>();
+
   const [errors, setErrors] = useState<FormErrors>({});
 
   const router = useRouter();
@@ -44,10 +71,10 @@ const CreateProduct: NextPage = () => {
 
   const handleValidation = () => {
     const requiredData = {
-      name,
+      productId,
+      customerId,
+      saleDate,
       quantity,
-      purchasePrice,
-      salePrice,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -64,14 +91,6 @@ const CreateProduct: NextPage = () => {
       newErrors.quantity = true;
     }
 
-    if (!validator.isNumeric(String(purchasePrice || ""))) {
-      newErrors.purchasePrice = true;
-    }
-
-    if (!validator.isNumeric(String(salePrice || ""))) {
-      newErrors.salePrice = true;
-    }
-
     return newErrors;
   };
 
@@ -83,25 +102,24 @@ const CreateProduct: NextPage = () => {
     }
 
     try {
-      await api.post("/products", {
-        name,
-        description,
+      await api.post("/sales", {
+        productId,
+        customerId,
+        saleDate,
         quantity,
-        purchasePrice,
-        salePrice,
       });
 
       toast({
-        title: "Produto criado com sucesso!",
+        title: "Venda criada com sucesso!",
         status: "success",
         duration: 9000,
         position: "top-right",
         isClosable: true,
       });
-      router.replace("/products");
+      router.replace("/sales");
     } catch (error: any) {
       toast({
-        title: "Falha ao criar produto, tente novamente.",
+        title: "Falha ao criar a venda, tente novamente.",
         description: error.response.data.message,
         status: "error",
         duration: 9000,
@@ -114,7 +132,7 @@ const CreateProduct: NextPage = () => {
   return (
     <>
       <Head>
-        <title>Criar Produto | baselog</title>
+        <title>Criar Venda | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -124,55 +142,46 @@ const CreateProduct: NextPage = () => {
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
             <Heading size="lg" fontWeight="normal">
-              Criar Produto
+              Criar Venda
             </Heading>
 
             <Divider my="6" borderColor="gray.700" />
 
             <VStack spacing="8">
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
+                <Select
+                  name="productId"
+                  label="Produtos *"
+                  value={productId}
+                  onChange={(e) => setProductId(e.target.value)}
+                  options={products.map(product => ({ label: product.name, value: product.id }))}
+                  isInvalid={errors.productId}
+                />
+                <Select
+                  name="customerId"
+                  label="Clientes *"
+                  value={customerId}
+                  onChange={(e) => setCustomerId(e.target.value)}
+                  options={clients.map(client => ({ label: client.name, value: client.id }))}
+                  isInvalid={errors.productId}
+                />
+              </SimpleGrid>
+              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="name"
-                  label="Nome *"
-                  isRequired
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  isInvalid={errors.name}
+                  name="saleDate"
+                  label="Data de Venda *"
+                  type="date"
+                  value={saleDate}
+                  onChange={(e) => setSaleDate(e.target.value)}
+                  isInvalid={errors.saleDate}
                 />
                 <Input
                   name="quantity"
-                  label="Quantidade em Estoque *"
+                  label="Quantidade *"
                   type="number"
                   value={quantity}
                   onChange={(e) => setQuantity(Number(e.target.value))}
                   isInvalid={errors.quantity}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="description"
-                  label="Descrição"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  isInvalid={errors.description}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="purchasePrice"
-                  label="Preço de Compra *"
-                  type="number"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                  isInvalid={errors.purchasePrice}
-                />
-                <Input
-                  name="salePrice"
-                  label="Preço de Venda *"
-                  type="number"
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(Number(e.target.value))}
-                  isInvalid={errors.salePrice}
                 />
               </SimpleGrid>
             </VStack>
@@ -201,3 +210,15 @@ const CreateProduct: NextPage = () => {
 };
 
 export default CreateProduct;
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  const resultClients = await api.get<Client[]>("/customers")
+  const resultProducts = await api.get<Client[]>("/products")
+  
+  return {
+    props: {
+      baseClients: resultClients.data,
+      baseProducts: resultProducts.data
+    },
+  };
+};
