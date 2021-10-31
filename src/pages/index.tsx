@@ -26,67 +26,22 @@ const Chart = dynamic(() => import("react-apexcharts"), {
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
 import { api } from "../services/api";
+import { toPrecision } from "@chakra-ui/utils";
 
-const options: ApexOptions = {
-  chart: {
-    toolbar: {
-      show: false,
-    },
-    zoom: {
-      enabled: false,
-    },
-    foreColor: theme.colors.gray[500],
-  },
-  grid: {
-    show: false,
-  },
-  dataLabels: {
-    enabled: false,
-  },
-  tooltip: {
-    enabled: false,
-  },
-  xaxis: {
-    type: "datetime",
-    axisBorder: {
-      color: theme.colors.gray[600],
-    },
-    axisTicks: {
-      color: theme.colors.gray[600],
-    },
-    categories: [
-      "2021-09-23T00:00:00.000Z",
-      "2021-09-24T00:00:00.000Z",
-      "2021-09-25T00:00:00.000Z",
-      "2021-09-26T00:00:00.000Z",
-      "2021-09-27T00:00:00.000Z",
-      "2021-09-28T00:00:00.000Z",
-      "2021-09-29T00:00:00.000Z",
-    ],
-  },
-  fill: {
-    opacity: 0.3,
-    type: "gradient",
-    gradient: {
-      shade: "dark",
-      opacityFrom: 0.7,
-      opacityTo: 0.3,
-    },
-  },
-};
-
-const series = [
-  {
-    name: "series1",
-    data: [31, 120, 10, 28, 61, 18, 109],
-  },
-];
+interface PercentItem {
+  name: string;
+  total: number;
+}
 
 interface DashboardProps {
   baseAvgTicket: number;
+  percentChart: PercentItem[];
 }
 
-const Dashboard: NextPage<DashboardProps> = ({ baseAvgTicket }) => {
+const Dashboard: NextPage<DashboardProps> = ({
+  baseAvgTicket,
+  percentChart,
+}) => {
   const [avgTicket, setAvgTicket] = useState(baseAvgTicket);
   const [month, setMonth] = useState(new Date());
 
@@ -127,6 +82,60 @@ const Dashboard: NextPage<DashboardProps> = ({ baseAvgTicket }) => {
     const newDate = new Date(month.getFullYear(), month.getMonth() - 1, 1);
     setMonth(newDate);
     getAvgTicket(newDate);
+  };
+
+  const series = [
+    {
+      name: "Porcentagem",
+      data: percentChart.map((percent) => Math.round(percent.total * 100)),
+    },
+  ];
+
+  const options: ApexOptions = {
+    chart: {
+      toolbar: {
+        show: false,
+      },
+      zoom: {
+        enabled: false,
+      },
+      foreColor: theme.colors.gray[500],
+    },
+    grid: {
+      show: false,
+    },
+    dataLabels: {
+      enabled: false,
+    },
+    tooltip: {
+      enabled: true,
+      theme: "dark",
+      y: {
+        formatter: (val) => `${val}%`,
+      },
+    },
+    xaxis: {
+      type: "category",
+      axisBorder: {
+        color: theme.colors.gray[600],
+      },
+      axisTicks: {
+        color: theme.colors.gray[600],
+      },
+      categories: percentChart.map((percent) => percent.name),
+    },
+    yaxis: {
+      max: 100,
+    },
+    fill: {
+      opacity: 0.4,
+      type: "gradient",
+      gradient: {
+        shade: "dark",
+        opacityFrom: 0.7,
+        opacityTo: 0.4,
+      },
+    },
   };
 
   return (
@@ -175,10 +184,10 @@ const Dashboard: NextPage<DashboardProps> = ({ baseAvgTicket }) => {
             </Box>
             <Box p={["6", "8"]} bg="gray.800" borderRadius={8} w="100%">
               <Text fontSize="lg" mb="4">
-                Taxa de abertura
+                Porcentagem de Vendas
               </Text>
               <Chart
-                type="area"
+                type="bar"
                 height={250}
                 options={options}
                 series={series}
@@ -199,19 +208,25 @@ export const getServerSideProps: GetServerSideProps = async () => {
     const initialDate = new Date(date.getFullYear(), date.getMonth(), 1);
     const finalDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-    const response = await api.get("/avg", {
+    const avgResponse = await api.get("/avg", {
       params: {
         initialDate,
         finalDate,
       },
     });
 
+    const percentResponse = await api.get("/percent");
+    console.log(percentResponse);
+
     return {
-      props: { baseAvgTicket: response.data?.avg || 0 },
+      props: {
+        baseAvgTicket: avgResponse.data?.avg || 0,
+        percentChart: percentResponse.data,
+      },
     };
   } catch {
     return {
-      props: { baseAvgTicket: 0 },
+      props: { baseAvgTicket: 0, percentChart: [] },
     };
   }
 };

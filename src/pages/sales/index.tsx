@@ -26,33 +26,33 @@ import { api } from "../../services/api";
 import { useState } from "react";
 
 interface Sale {
-  id: string
-  productId: string,
-  product: Product,
-  customer: Client,
-  customerId: string
-  saleDate: string
-  quantity: number
+  id: string;
+  productId: string;
+  product: Product;
+  customer: Client;
+  customerId: string;
+  saleDate: string;
+  quantity: number;
 }
 
 interface Client {
-  id: string
-  name: string
-  email: string
-  cpf: string
-  birthDate: string
-  gender: string
-  phone: string
-  address: string
+  id: string;
+  name: string;
+  email: string;
+  cpf: string;
+  birthDate: string;
+  gender: string;
+  phone: string;
+  address: string;
 }
 
 interface Product {
-  id: string
-  name: string
-  description?: string
-  purchasePrice: number
-  salePrice: number
-  quantity: number
+  id: string;
+  name: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
 }
 
 interface SaleListProps {
@@ -80,9 +80,7 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
   const handleProductDelete = async (saleId: string) => {
     try {
       await api.delete(`/sales/${saleId}`);
-      const newSale = sales.filter(
-        (sale) => sale.id !== saleId
-      );
+      const newSale = sales.filter((sale) => sale.id !== saleId);
       setSales(newSale);
       toast({
         title: "Venda removida com sucesso!",
@@ -135,9 +133,8 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
             <Table colorScheme="whiteAlpha">
               <Thead>
                 <Tr>
-                  <Th>Venda</Th>
-                  {isWideVersion && <Th>Produto</Th>}
-                  {isWideVersion && <Th>Cliente</Th>}
+                  <Th>Produto</Th>
+                  <Th>Cliente</Th>
                   {isWideVersion && <Th>Data de venda</Th>}
                   {isWideVersion && <Th w="8"></Th>}
                 </Tr>

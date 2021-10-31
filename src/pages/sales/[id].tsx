@@ -17,6 +17,17 @@ import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 
+interface Client {
+  id: string;
+  name: string;
+  email: string;
+  cpf: string;
+  birthDate: string;
+  gender: string;
+  phone: string;
+  address: string;
+}
+
 interface Product {
   id: string;
   name: string;
@@ -26,20 +37,32 @@ interface Product {
   quantity: number;
 }
 
-interface ShowProductProps {
+interface Sale {
+  id: string;
+  productId: string;
   product: Product;
+  customer: Client;
+  customerId: string;
+  saleDate: string;
+  quantity: number;
 }
 
-const ShowProduct: NextPage<ShowProductProps> = ({ product }) => {
-  const moneyParser = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+interface ShowSaleProps {
+  sale: Sale;
+}
+
+const ShowSale: NextPage<ShowSaleProps> = ({ sale }) => {
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
+      -2
+    )}/${d.getFullYear()}`;
+  };
 
   return (
     <>
       <Head>
-        <title>{product.name} | baselog</title>
+        <title>Venda | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -51,38 +74,30 @@ const ShowProduct: NextPage<ShowProductProps> = ({ product }) => {
             <VStack spacing="8">
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
                 <Input
-                  name="name"
-                  label="Nome"
+                  name="product"
+                  label="Produto"
                   isRequired
-                  value={product.name}
+                  value={sale.product.name}
+                  isReadOnly
+                />
+                <Input
+                  name="customer"
+                  label="Cliente"
+                  value={sale.customer.name}
+                  isReadOnly
+                />
+              </SimpleGrid>
+              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
+                <Input
+                  name="sale"
+                  label="Data de Venda"
+                  value={formatDate(sale.saleDate)}
                   isReadOnly
                 />
                 <Input
                   name="quantity"
-                  label="Quantidade em Estoque"
-                  value={product.quantity}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="description"
-                  label="Descrição"
-                  value={product.description}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="purchasePrice"
-                  label="Preço de Compra"
-                  value={moneyParser.format(product.purchasePrice)}
-                  isReadOnly
-                />
-                <Input
-                  name="salePrice"
-                  label="Preço de Venda"
-                  value={moneyParser.format(product.salePrice)}
+                  label="Quantidade"
+                  value={sale.quantity}
                   isReadOnly
                 />
               </SimpleGrid>
@@ -90,12 +105,12 @@ const ShowProduct: NextPage<ShowProductProps> = ({ product }) => {
 
             <Flex mt="8" justify="flex-end">
               <HStack spacing="4">
-                <Link href="/products" passHref>
+                <Link href="/sales" passHref>
                   <Button colorScheme="whiteAlpha" as="a">
                     Voltar
                   </Button>
                 </Link>
-                <Link href={`/products/edit/${product.id}`} passHref>
+                <Link href={`/sales/edit/${sale.id}`} passHref>
                   <Button
                     as="a"
                     colorScheme="green"
@@ -113,15 +128,15 @@ const ShowProduct: NextPage<ShowProductProps> = ({ product }) => {
   );
 };
 
-export default ShowProduct;
+export default ShowSale;
 
 export const getServerSideProps: GetServerSideProps = async ({ params }) => {
   try {
     const id = params?.id;
-    const response = await api.get<Product>(`/products/${id}`);
+    const response = await api.get<Sale>(`/sales/${id}`);
 
     return {
-      props: { product: response.data },
+      props: { sale: response.data },
     };
   } catch {
     return {
