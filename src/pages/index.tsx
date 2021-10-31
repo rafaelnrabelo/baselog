@@ -216,7 +216,6 @@ export const getServerSideProps: GetServerSideProps = async () => {
     });
 
     const percentResponse = await api.get("/percent");
-    console.log(percentResponse);
 
     return {
       props: {

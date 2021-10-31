@@ -23,7 +23,7 @@ import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
 import { api } from "../../services/api";
 
-import { Select } from '../../components/Form/Select'
+import { Select } from "../../components/Form/Select";
 interface FormErrors {
   productId?: boolean;
   customerId?: boolean;
@@ -32,30 +32,33 @@ interface FormErrors {
 }
 
 interface Client {
-  id: string
-  name: string
-  email: string
-  cpf: string
-  birthDate: string
-  gender: string
-  phone: string
-  address: string
+  id: string;
+  name: string;
+  email: string;
+  cpf: string;
+  birthDate: string;
+  gender: string;
+  phone: string;
+  address: string;
 }
 
 interface Product {
-  id: string
-  name: string
-  description?: string
-  purchasePrice: number
-  salePrice: number
-  quantity: number
+  id: string;
+  name: string;
+  description?: string;
+  purchasePrice: number;
+  salePrice: number;
+  quantity: number;
 }
 interface SalesListProps {
   baseProducts: Product[];
   baseClients: Client[];
 }
 
-const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) => {
+const CreateProduct: NextPage<SalesListProps> = ({
+  baseClients,
+  baseProducts,
+}) => {
   const [clients] = useState<Client[]>(baseClients || []);
   const [products] = useState<Product[]>(baseProducts || []);
 
@@ -154,7 +157,10 @@ const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) 
                   label="Produtos *"
                   value={productId}
                   onChange={(e) => setProductId(e.target.value)}
-                  options={products.map(product => ({ label: product.name, value: product.id }))}
+                  options={products.map((product) => ({
+                    label: product.name,
+                    value: product.id,
+                  }))}
                   isInvalid={errors.productId}
                 />
                 <Select
@@ -162,7 +168,10 @@ const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) 
                   label="Clientes *"
                   value={customerId}
                   onChange={(e) => setCustomerId(e.target.value)}
-                  options={clients.map(client => ({ label: client.name, value: client.id }))}
+                  options={clients.map((client) => ({
+                    label: client.name,
+                    value: client.id,
+                  }))}
                   isInvalid={errors.productId}
                 />
               </SimpleGrid>
@@ -188,7 +197,7 @@ const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) 
 
             <Flex mt="8" justify="flex-end">
               <HStack spacing="4">
-                <Link href="/products" passHref>
+                <Link href="/sales" passHref>
                   <Button colorScheme="whiteAlpha" as="a">
                     Cancelar
                   </Button>
@@ -212,13 +221,13 @@ const CreateProduct: NextPage<SalesListProps> = ({ baseClients, baseProducts }) 
 export default CreateProduct;
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const resultClients = await api.get<Client[]>("/customers")
-  const resultProducts = await api.get<Client[]>("/products")
-  
+  const resultClients = await api.get<Client[]>("/customers");
+  const resultProducts = await api.get<Client[]>("/products");
+
   return {
     props: {
       baseClients: resultClients.data,
-      baseProducts: resultProducts.data
+      baseProducts: resultProducts.data,
     },
   };
 };
