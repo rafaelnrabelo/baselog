@@ -184,7 +184,7 @@ const Dashboard: NextPage<DashboardProps> = ({
             </Box>
             <Box p={["6", "8"]} bg="gray.800" borderRadius={8} w="100%">
               <Text fontSize="lg" mb="4">
-                Porcentagem de Vendas
+                Porcentagem de Vendas Total
               </Text>
               <Chart
                 type="bar"
