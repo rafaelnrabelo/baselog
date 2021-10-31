@@ -222,7 +222,7 @@ export default CreateProduct;
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const resultClients = await api.get<Client[]>("/customers");
-  const resultProducts = await api.get<Client[]>("/products");
+  const resultProducts = await api.get<Product[]>("/products");
 
   return {
     props: {
