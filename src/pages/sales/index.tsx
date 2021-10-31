@@ -25,44 +25,67 @@ import { Sidebar } from "../../components/Sidebar";
 import { api } from "../../services/api";
 import { useState } from "react";
 
+interface Sale {
+  id: string
+  productId: string,
+  product: Product,
+  customer: Client,
+  customerId: string
+  saleDate: string
+  quantity: number
+}
+
+interface Client {
+  id: string
+  name: string
+  email: string
+  cpf: string
+  birthDate: string
+  gender: string
+  phone: string
+  address: string
+}
+
 interface Product {
-  id: string;
-  name: string;
-  description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
+  id: string
+  name: string
+  description?: string
+  purchasePrice: number
+  salePrice: number
+  quantity: number
 }
 
-interface ProductListProps {
-  baseProducts: Product[];
+interface SaleListProps {
+  baseSales: Sale[];
 }
 
-const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
-  const [products, setProducts] = useState(baseProducts || []);
+const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
+  const [sales, setSales] = useState(baseSales || []);
 
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true,
   });
 
-  const moneyParser = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  const formatDate = (date: string) => {
+    const d = new Date(date);
+    return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
+      -2
+    )}/${d.getFullYear()}`;
+  };
 
   const toast = useToast();
   const router = useRouter();
 
-  const handleProductDelete = async (productId: string) => {
+  const handleProductDelete = async (saleId: string) => {
     try {
-      await api.delete(`/products/${productId}`);
-      const newProducts = products.filter(
-        (product) => product.id !== productId
+      await api.delete(`/sales/${saleId}`);
+      const newSale = sales.filter(
+        (sale) => sale.id !== saleId
       );
-      setProducts(newProducts);
+      setSales(newSale);
       toast({
-        title: "Produto removido com sucesso!",
+        title: "Venda removida com sucesso!",
         status: "success",
         duration: 9000,
         position: "top-right",
@@ -70,7 +93,7 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
       });
     } catch (error: any) {
       toast({
-        title: "Falha ao remover produto, tente novamente.",
+        title: "Falha ao remover venda, tente novamente.",
         description: error.response.data.message,
         status: "error",
         duration: 9000,
@@ -83,7 +106,7 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
   return (
     <>
       <Head>
-        <title>Produtos | baselog</title>
+        <title>Vendas | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -94,7 +117,7 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
           <Box flex="1" borderRadius={8} bg="gray.800" p="8">
             <Flex mb="8" justify="space-between" align="center">
               <Heading size="lg" fontWeight="normal">
-                Produtos
+                Vendas
               </Heading>
               <Link href="/products/create" passHref>
                 <Button
@@ -112,42 +135,28 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
             <Table colorScheme="whiteAlpha">
               <Thead>
                 <Tr>
-                  <Th>Produto</Th>
-                  {isWideVersion && <Th>Quantidade</Th>}
-                  {isWideVersion && <Th>Preço de Compra</Th>}
-                  {isWideVersion && <Th>Preço de Venda</Th>}
+                  <Th>Venda</Th>
+                  {isWideVersion && <Th>Produto</Th>}
+                  {isWideVersion && <Th>Cliente</Th>}
+                  {isWideVersion && <Th>Data de venda</Th>}
                   {isWideVersion && <Th w="8"></Th>}
                 </Tr>
               </Thead>
               <Tbody>
-                {products.map((product) => (
+                {sales.map((sale) => (
                   <Tr
-                    key={product.id}
+                    key={sale.id}
                     role="link"
                     cursor="pointer"
                     transition="backdrop-filter 0.2s"
                     _hover={{
                       backdropFilter: "brightness(1.15)",
                     }}
-                    onClick={() => router.push(`/products/${product.id}`)}
+                    onClick={() => router.push(`/sales/${sale.id}`)}
                   >
-                    <Td>
-                      <Box>
-                        <Text fontWeight="bold">{product.name}</Text>
-                        {product.description && (
-                          <Text fontSize="sm" color="gray.300">
-                            {product.description}
-                          </Text>
-                        )}
-                      </Box>
-                    </Td>
-                    {isWideVersion && <Td>{product.quantity}</Td>}
-                    {isWideVersion && (
-                      <Td>{moneyParser.format(product.purchasePrice)}</Td>
-                    )}
-                    {isWideVersion && (
-                      <Td>{moneyParser.format(product.salePrice)}</Td>
-                    )}
+                    <Td fontWeight="bold">{sale.product.name}</Td>
+                    <Td fontWeight="bold">{sale.customer.name}</Td>
+                    {isWideVersion && <Td>{formatDate(sale.saleDate)}</Td>}
                     {isWideVersion && (
                       <Td>
                         <Button
@@ -159,7 +168,7 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
                           leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleProductDelete(product.id);
+                            handleProductDelete(sale.id);
                           }}
                         >
                           Deletar
@@ -177,12 +186,12 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
   );
 };
 
-export default ProductList;
+export default SaleList;
 
 export const getServerSideProps: GetServerSideProps = async () => {
-  const response = await api.get<Product[]>("/products");
+  const response = await api.get<Sale[]>("/sales");
 
   return {
-    props: { baseProducts: response.data },
+    props: { baseSales: response.data },
   };
 };
