@@ -172,7 +172,7 @@ const CreateProduct: NextPage<SalesListProps> = ({
                     label: client.name,
                     value: client.id,
                   }))}
-                  isInvalid={errors.productId}
+                  isInvalid={errors.customerId}
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
