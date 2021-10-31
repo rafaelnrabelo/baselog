@@ -1,4 +1,5 @@
 /* eslint-disable @next/next/no-title-in-document-head */
+// eslint-disable-next-line @next/next/no-document-import-in-page
 import Document, { Html, Head, NextScript, Main } from "next/document";
 
 export default class MyDocument extends Document {
