@@ -1,7 +1,22 @@
-import type { NextPage } from "next";
+import type { NextPage, GetServerSideProps } from "next";
+import { useState } from "react";
 import Head from "next/head";
 import dynamic from "next/dynamic";
-import { Box, Flex, VStack, Text, theme } from "@chakra-ui/react";
+import {
+  Box,
+  Flex,
+  VStack,
+  Text,
+  Stat,
+  StatLabel,
+  StatNumber,
+  StatHelpText,
+  IconButton,
+  Icon,
+  theme,
+} from "@chakra-ui/react";
+import { RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
+
 import { ApexOptions } from "apexcharts";
 
 const Chart = dynamic(() => import("react-apexcharts"), {
@@ -10,6 +25,7 @@ const Chart = dynamic(() => import("react-apexcharts"), {
 
 import { Header } from "../components/Header";
 import { Sidebar } from "../components/Sidebar";
+import { api } from "../services/api";
 
 const options: ApexOptions = {
   chart: {
@@ -66,7 +82,53 @@ const series = [
   },
 ];
 
-const Dashboard: NextPage = () => {
+interface DashboardProps {
+  baseAvgTicket: number;
+}
+
+const Dashboard: NextPage<DashboardProps> = ({ baseAvgTicket }) => {
+  const [avgTicket, setAvgTicket] = useState(baseAvgTicket);
+  const [month, setMonth] = useState(new Date());
+
+  const moneyParser = new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+
+  const monthParser = new Intl.DateTimeFormat("pt-BR", {
+    year: "numeric",
+    month: "long",
+  });
+
+  const getAvgTicket = async (newDate: Date) => {
+    const initialDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
+    const finalDate = new Date(
+      newDate.getFullYear(),
+      newDate.getMonth() + 1,
+      0
+    );
+
+    const response = await api.get("/avg", {
+      params: {
+        initialDate,
+        finalDate,
+      },
+    });
+    setAvgTicket(response.data?.avg || 0);
+  };
+
+  const handleNextMonth = () => {
+    const newDate = new Date(month.getFullYear(), month.getMonth() + 1, 1);
+    setMonth(newDate);
+    getAvgTicket(newDate);
+  };
+
+  const handlePreviousMonth = () => {
+    const newDate = new Date(month.getFullYear(), month.getMonth() - 1, 1);
+    setMonth(newDate);
+    getAvgTicket(newDate);
+  };
+
   return (
     <>
       <Head>
@@ -84,25 +146,34 @@ const Dashboard: NextPage = () => {
               bg="gray.800"
               borderRadius={8}
               pb="4"
-              w={{ "2xl": "100%", xl: "90%" }}
+              w="100%"
               mb="4"
+              display="flex"
+              alignItems="center"
             >
-              <Text fontSize="lg" mb="4">
-                Inscritos da semana
-              </Text>
-              <Chart
-                type="area"
-                height={250}
-                options={options}
-                series={series}
+              <IconButton
+                colorScheme="blue"
+                aria-label="Anterior"
+                icon={<Icon as={RiArrowLeftSLine} />}
+                onClick={handlePreviousMonth}
+              />
+              <Stat display="flex" justifyContent="center" textAlign="center">
+                <StatHelpText textTransform="capitalize" fontSize={16}>
+                  {monthParser.format(month)}
+                </StatHelpText>
+                <StatLabel fontSize={20}>Ticket Médio</StatLabel>
+                <StatNumber fontSize={36}>
+                  {moneyParser.format(avgTicket)}
+                </StatNumber>
+              </Stat>
+              <IconButton
+                colorScheme="blue"
+                aria-label="Próximo"
+                icon={<Icon as={RiArrowRightSLine} />}
+                onClick={handleNextMonth}
               />
             </Box>
-            <Box
-              p={["6", "8"]}
-              bg="gray.800"
-              borderRadius={8}
-              w={{ "2xl": "100%", xl: "90%" }}
-            >
+            <Box p={["6", "8"]} bg="gray.800" borderRadius={8} w="100%">
               <Text fontSize="lg" mb="4">
                 Taxa de abertura
               </Text>
@@ -121,3 +192,26 @@ const Dashboard: NextPage = () => {
 };
 
 export default Dashboard;
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const date = new Date();
+    const initialDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    const finalDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+    const response = await api.get("/avg", {
+      params: {
+        initialDate,
+        finalDate,
+      },
+    });
+
+    return {
+      props: { baseAvgTicket: response.data?.avg || 0 },
+    };
+  } catch {
+    return {
+      props: { baseAvgTicket: 0 },
+    };
+  }
+};
