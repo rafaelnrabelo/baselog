@@ -60,7 +60,6 @@ const SaleList: NextPage = () => {
 
   useEffect(() => {
     getSales();
-    console.log(user);
   }, [client, user]);
 
   const getSales = async () => {

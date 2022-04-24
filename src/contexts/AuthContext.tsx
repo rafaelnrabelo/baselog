@@ -75,8 +75,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, []);
 
   const getMe = async (token: string) => {
+    console.log(process.env.NEXT_PUBLIC_BASE_URL);
     const response = await axios.get<SignInReturn>(
-      "http://localhost:3333/auth/me",
+      `${process.env.NEXT_PUBLIC_BASE_URL}/auth/me`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -99,7 +100,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setAuthLoading(true);
       const response = await axios.post<SignInReturn>(
-        "http://localhost:3333/auth/login",
+        `${process.env.NEXT_PUBLIC_BASE_URL}/auth/login`,
         {
           email,
           password,
@@ -121,11 +122,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await loadStorageData();
       if (data.token) {
-        await axios.post("http://localhost:3333/auth/logout", null, {
-          headers: {
-            Authorization: `Bearer ${data.token}`,
-          },
-        });
+        await axios.post(
+          `${process.env.NEXT_PUBLIC_BASE_URL}/auth/logout`,
+          null,
+          {
+            headers: {
+              Authorization: `Bearer ${data.token}`,
+            },
+          }
+        );
       }
       localStorage.removeItem("@BaseLog:token");
       setData({} as AuthState);

@@ -99,11 +99,6 @@ const Me: NextPage = () => {
     setErrors({});
 
     try {
-      console.log({
-        currentPassword,
-        newPassword,
-        newPasswordConfirmation,
-      });
       await apiClient.put(`/auth/change-password`, {
         currentPassword,
         newPassword,

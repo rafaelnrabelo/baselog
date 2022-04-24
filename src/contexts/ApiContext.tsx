@@ -24,7 +24,7 @@ const ApiProvider: React.FC<Props> = ({ children }) => {
   const toast = useToast();
 
   const api = axios.create({
-    baseURL: "http://localhost:3333",
+    baseURL: process.env.NEXT_PUBLIC_BASE_URL,
   });
 
   async function getToken() {
