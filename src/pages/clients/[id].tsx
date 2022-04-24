@@ -4,53 +4,56 @@ import Link from "next/link";
 import {
   Box,
   Flex,
-  Icon,
   VStack,
   HStack,
   Button,
   SimpleGrid,
+  CircularProgress,
 } from "@chakra-ui/react";
-import { RiPencilLine } from "react-icons/ri";
 
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
-import { api } from "../../services/api";
-import { Select } from "../../components/Form/Select";
+import { useApi } from "../../contexts/ApiContext";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import { User } from "../../contexts/AuthContext";
 
 interface Client {
   id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
 }
 
 interface ShowClientProps {
   client: Client;
 }
 
-const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
-  const formatDate = (date: string) => {
-    const d = new Date(date);
-    return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
-      -2
-    )}/${d.getFullYear()}`;
-  };
+const ShowClient: NextPage<ShowClientProps> = () => {
+  const [user, setUser] = useState<User>();
+  const [loading, setLoading] = useState(false);
+  const { client } = useApi();
+  const router = useRouter();
+  const { id } = router.query;
 
-  const genderOptions = [
-    { value: "MALE", label: "Masculino" },
-    { value: "FEMALE", label: "Feminino" },
-    { value: "OTHER", label: "Outros" },
-  ];
+  useEffect(() => {
+    getUser();
+  }, [client, id]);
+
+  const getUser = async () => {
+    if (client && id) {
+      setLoading(true);
+      const response = await client.get<User>(`/users/${id}`);
+      setUser(response.data);
+      setLoading(false);
+    }
+  };
 
   return (
     <>
       <Head>
-        <title>{client.name} | baselog</title>
+        <title>Cliente | baselog</title>
       </Head>
       <Box>
         <Header />
@@ -59,91 +62,64 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
           <Sidebar />
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
-            <VStack spacing="8">
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="name"
-                  label="Nome"
-                  isRequired
-                  value={client.name}
-                  isReadOnly
+            {loading ? (
+              <Flex w="100%" h="100%">
+                <CircularProgress
+                  mx="auto"
+                  isIndeterminate
+                  mt="auto"
+                  mb="auto"
                 />
-                <Input
-                  name="email"
-                  label="E-mail"
-                  isRequired
-                  value={client.email}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="cpf"
-                  label="CPF"
-                  mask="999.999.999-99"
-                  isRequired
-                  value={client.cpf}
-                  isReadOnly
-                />
-                <Input
-                  name="birthDate"
-                  label="Data de nascimento"
-                  isRequired
-                  value={formatDate(client.birthDate)}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="gender"
-                  label="Gênero"
-                  value={
-                    genderOptions.find(
-                      (gender) => gender.value === client.gender
-                    )?.label
-                  }
-                  isReadOnly
-                  isRequired
-                />
-
-                <Input
-                  name="phone"
-                  label="Telefone"
-                  mask="(99) 99999-9999"
-                  isRequired
-                  value={client.phone}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="address"
-                  label="Endereço *"
-                  value={client.address}
-                  isReadOnly
-                  isRequired
-                />
-              </SimpleGrid>
-            </VStack>
-
-            <Flex mt="8" justify="flex-end">
-              <HStack spacing="4">
-                <Link href="/clients" passHref>
-                  <Button colorScheme="whiteAlpha" as="a">
-                    Voltar
-                  </Button>
-                </Link>
-                <Link href={`/clients/edit/${client.id}`} passHref>
-                  <Button
-                    as="a"
-                    colorScheme="green"
-                    leftIcon={<Icon as={RiPencilLine} fontSize="20" />}
+              </Flex>
+            ) : (
+              <>
+                <VStack spacing="8">
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
                   >
-                    Editar
-                  </Button>
-                </Link>
-              </HStack>
-            </Flex>
+                    <Input
+                      name="firstName"
+                      label="Nome"
+                      isRequired
+                      value={user?.firstName}
+                      isReadOnly
+                    />
+                    <Input
+                      name="lastName"
+                      label="Sobrenome"
+                      isRequired
+                      value={user?.lastName}
+                      isReadOnly
+                    />
+                  </SimpleGrid>
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
+                  >
+                    <Input
+                      name="email"
+                      label="E-mail"
+                      isRequired
+                      value={user?.email}
+                      isReadOnly
+                    />
+                  </SimpleGrid>
+                </VStack>
+
+                <Flex mt="8" justify="flex-end">
+                  <HStack spacing="4">
+                    <Link href="/clients" passHref>
+                      <Button colorScheme="whiteAlpha" as="a">
+                        Voltar
+                      </Button>
+                    </Link>
+                  </HStack>
+                </Flex>
+              </>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -152,19 +128,3 @@ const ShowClient: NextPage<ShowClientProps> = ({ client }) => {
 };
 
 export default ShowClient;
-
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  try {
-    const id = params?.id;
-    const response = await api.get<Client>(`/customers/${id}`);
-
-    return {
-      props: { client: response.data },
-    };
-  } catch {
-    return {
-      props: {},
-      notFound: true,
-    };
-  }
-};

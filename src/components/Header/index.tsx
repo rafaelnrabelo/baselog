@@ -3,9 +3,12 @@ import { RiMenuLine } from "react-icons/ri";
 
 import { Logo } from "./Logo";
 import { useSideBarDrawer } from "../../contexts/SidebarDrawerContext";
+import Profile from "./Profile";
+import { useAuth } from "../../contexts/AuthContext";
 
 export const Header: React.FC = () => {
   const { onOpen } = useSideBarDrawer();
+  const { user } = useAuth();
 
   const isWideVersion = useBreakpointValue({
     base: false,
@@ -35,6 +38,12 @@ export const Header: React.FC = () => {
       )}
 
       <Logo />
+
+      {user && (
+        <Flex align="center" ml="auto">
+          <Profile showProfileData={isWideVersion} profileData={user} />
+        </Flex>
+      )}
     </Flex>
   );
 };

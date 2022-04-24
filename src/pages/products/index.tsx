@@ -1,4 +1,4 @@
-import type { NextPage, GetServerSideProps } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -14,32 +14,36 @@ import {
   Td,
   Th,
   Tbody,
+  Tfoot,
   Text,
   useBreakpointValue,
   useToast,
+  CircularProgress,
 } from "@chakra-ui/react";
 import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
-import { api } from "../../services/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface Product {
   id: string;
   name: string;
   description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
+  price: number;
 }
 
 interface ProductListProps {
   baseProducts: Product[];
 }
 
-const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
-  const [products, setProducts] = useState(baseProducts || []);
+const ProductList: NextPage<ProductListProps> = () => {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { client } = useApi();
+  const { token, authLoading, isAdmin } = useAuth();
 
   const isWideVersion = useBreakpointValue({
     base: false,
@@ -54,9 +58,28 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
   const toast = useToast();
   const router = useRouter();
 
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    getProducts();
+  }, [client]);
+
+  const getProducts = async () => {
+    if (client) {
+      setLoading(true);
+      const response = await client.get<Product[]>("/products");
+      setProducts(response.data);
+      setLoading(false);
+    }
+  };
+
   const handleProductDelete = async (productId: string) => {
     try {
-      await api.delete(`/products/${productId}`);
+      await client.delete(`/products/${productId}`);
       const newProducts = products.filter(
         (product) => product.id !== productId
       );
@@ -71,7 +94,6 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
     } catch (error: any) {
       toast({
         title: "Falha ao remover produto, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -96,80 +118,82 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
               <Heading size="lg" fontWeight="normal">
                 Produtos
               </Heading>
-              <Link href="/products/create" passHref>
-                <Button
-                  as="a"
-                  size="sm"
-                  fontSize="sm"
-                  colorScheme="blue"
-                  leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-                >
-                  Criar novo
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link href="/products/create" passHref>
+                  <Button
+                    as="a"
+                    size="sm"
+                    fontSize="sm"
+                    colorScheme="blue"
+                    leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+                  >
+                    Criar novo
+                  </Button>
+                </Link>
+              )}
             </Flex>
 
-            <Table colorScheme="whiteAlpha">
-              <Thead>
-                <Tr>
-                  <Th>Produto</Th>
-                  {isWideVersion && <Th>Quantidade</Th>}
-                  {isWideVersion && <Th>Preço de Compra</Th>}
-                  {isWideVersion && <Th>Preço de Venda</Th>}
-                  {isWideVersion && <Th w="8"></Th>}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {products.map((product) => (
-                  <Tr
-                    key={product.id}
-                    role="link"
-                    cursor="pointer"
-                    transition="backdrop-filter 0.2s"
-                    _hover={{
-                      backdropFilter: "brightness(1.15)",
-                    }}
-                    onClick={() => router.push(`/products/${product.id}`)}
-                  >
-                    <Td>
-                      <Box>
-                        <Text fontWeight="bold">{product.name}</Text>
-                        {product.description && (
-                          <Text fontSize="sm" color="gray.300">
-                            {product.description}
-                          </Text>
-                        )}
-                      </Box>
-                    </Td>
-                    {isWideVersion && <Td>{product.quantity}</Td>}
-                    {isWideVersion && (
-                      <Td>{moneyParser.format(product.purchasePrice)}</Td>
-                    )}
-                    {isWideVersion && (
-                      <Td>{moneyParser.format(product.salePrice)}</Td>
-                    )}
-                    {isWideVersion && (
-                      <Td>
-                        <Button
-                          as="a"
-                          size="sm"
-                          fontSize="sm"
-                          cursor="pointer"
-                          colorScheme="red"
-                          leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleProductDelete(product.id);
-                          }}
-                        >
-                          Deletar
-                        </Button>
-                      </Td>
-                    )}
+            {loading ? (
+              <Flex w="100%" mt={20}>
+                <CircularProgress mx="auto" isIndeterminate />
+              </Flex>
+            ) : (
+              <Table colorScheme="whiteAlpha">
+                <Thead>
+                  <Tr>
+                    <Th>Produto</Th>
+                    <Th>Preço</Th>
+                    {isWideVersion && isAdmin && <Th w="8"></Th>}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
+                </Thead>
+                <Tbody>
+                  {products.map((product) => (
+                    <Tr
+                      key={product.id}
+                      role="link"
+                      cursor="pointer"
+                      transition="backdrop-filter 0.2s"
+                      _hover={{
+                        backdropFilter: "brightness(1.15)",
+                      }}
+                      onClick={() => router.push(`/products/${product.id}`)}
+                    >
+                      <Td>
+                        <Box>
+                          <Text fontWeight="bold">{product.name}</Text>
+                          {product.description && (
+                            <Text fontSize="sm" color="gray.300">
+                              {product.description}
+                            </Text>
+                          )}
+                        </Box>
+                      </Td>
+                      <Td>{moneyParser.format(product.price)}</Td>
+                      {isWideVersion && isAdmin && (
+                        <Td>
+                          <Button
+                            as="a"
+                            size="sm"
+                            fontSize="sm"
+                            cursor="pointer"
+                            colorScheme="red"
+                            leftIcon={
+                              <Icon as={RiDeleteBinLine} fontSize="16" />
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProductDelete(product.id);
+                            }}
+                          >
+                            Deletar
+                          </Button>
+                        </Td>
+                      )}
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -178,11 +202,3 @@ const ProductList: NextPage<ProductListProps> = ({ baseProducts }) => {
 };
 
 export default ProductList;
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const response = await api.get<Product[]>("/products");
-
-  return {
-    props: { baseProducts: response.data },
-  };
-};

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { GetServerSideProps, NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
@@ -14,6 +14,7 @@ import {
   Divider,
   useToast,
   SimpleGrid,
+  CircularProgress,
 } from "@chakra-ui/react";
 import { RiSaveLine } from "react-icons/ri";
 import validator from "validator";
@@ -21,50 +22,71 @@ import validator from "validator";
 import { Header } from "../../../components/Header";
 import { Sidebar } from "../../../components/Sidebar";
 import { Input } from "../../../components/Form/Input";
-import { api } from "../../../services/api";
+import { useApi } from "../../../contexts/ApiContext";
+import { useAuth } from "../../../contexts/AuthContext";
 
 interface Product {
   id: string;
   name: string;
   description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
-}
-
-interface EditProductProps {
-  product: Product;
+  price: number;
 }
 
 interface FormErrors {
   name?: boolean;
   description?: boolean;
-  quantity?: boolean;
-  purchasePrice?: boolean;
-  salePrice?: boolean;
+  price?: boolean;
 }
 
-const EditProduct: NextPage<EditProductProps> = ({ product }) => {
-  const [name, setName] = useState<string>(product.name);
-  const [description, setDescription] = useState<string>(
-    product?.description || ""
-  );
-  const [quantity, setQuantity] = useState<number>(product.quantity);
-  const [purchasePrice, setPurchasePrice] = useState<number>(
-    product.purchasePrice
-  );
-  const [salePrice, setSalePrice] = useState<number>(product.salePrice);
+const EditProduct: NextPage = () => {
+  const [name, setName] = useState<string>("");
+  const [description, setDescription] = useState<string>("");
+  const [price, setPrice] = useState<number>(0);
   const [errors, setErrors] = useState<FormErrors>({});
+  const [loading, setLoading] = useState(false);
+
+  const { token, authLoading, isAdmin } = useAuth();
+  const { client } = useApi();
 
   const router = useRouter();
   const toast = useToast();
 
+  const { id } = router.query;
+
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.replace("/products");
+    }
+  }, [isAdmin, authLoading]);
+
+  useEffect(() => {
+    getProduct();
+  }, [client]);
+
+  const getProduct = async () => {
+    if (client && id) {
+      setLoading(true);
+      const response = await client.get<Product>(`/products/${id}`);
+
+      const { name, description, price } = response.data;
+      setName(name);
+      setDescription(description || "");
+      setPrice(Number(price));
+
+      setLoading(false);
+    }
+  };
+
   const handleValidation = () => {
     const requiredData = {
       name,
-      quantity,
-      purchasePrice,
-      salePrice,
+      price,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -77,16 +99,8 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
       }
     });
 
-    if (!validator.isInt(String(quantity || ""))) {
-      newErrors.quantity = true;
-    }
-
-    if (!validator.isNumeric(String(purchasePrice || ""))) {
-      newErrors.purchasePrice = true;
-    }
-
-    if (!validator.isNumeric(String(salePrice || ""))) {
-      newErrors.salePrice = true;
+    if (!validator.isNumeric(String(price || ""))) {
+      newErrors.price = true;
     }
 
     return newErrors;
@@ -101,12 +115,10 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
     setErrors({});
 
     try {
-      await api.put(`/products/${product.id}`, {
+      await client.put(`/products/${id}`, {
         name,
         description,
-        quantity,
-        purchasePrice,
-        salePrice,
+        price: price.toFixed(2),
       });
 
       toast({
@@ -116,11 +128,10 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
         position: "top-right",
         isClosable: true,
       });
-      router.replace(`/products/${product.id}`);
+      router.replace(`/products/${id}`);
     } catch (error: any) {
       toast({
         title: "Falha ao atualizar produto, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -141,76 +152,79 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
           <Sidebar />
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
-            <Heading size="lg" fontWeight="normal">
-              Editar Produto
-            </Heading>
+            {loading ? (
+              <Flex w="100%" h="100%">
+                <CircularProgress
+                  mx="auto"
+                  isIndeterminate
+                  mt="auto"
+                  mb="auto"
+                />
+              </Flex>
+            ) : (
+              <>
+                <Heading size="lg" fontWeight="normal">
+                  Editar Produto
+                </Heading>
 
-            <Divider my="6" borderColor="gray.700" />
+                <Divider my="6" borderColor="gray.700" />
 
-            <VStack spacing="8">
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="name"
-                  label="Nome *"
-                  isRequired
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  isInvalid={errors.name}
-                />
-                <Input
-                  name="quantity"
-                  label="Quantidade em Estoque *"
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  isInvalid={errors.quantity}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="description"
-                  label="Descrição"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  isInvalid={errors.description}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="purchasePrice"
-                  label="Preço de Compra *"
-                  type="number"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                  isInvalid={errors.purchasePrice}
-                />
-                <Input
-                  name="salePrice"
-                  label="Preço de Venda *"
-                  type="number"
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(Number(e.target.value))}
-                  isInvalid={errors.salePrice}
-                />
-              </SimpleGrid>
-            </VStack>
+                <VStack spacing="8">
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
+                  >
+                    <Input
+                      name="name"
+                      label="Nome *"
+                      isRequired
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      isInvalid={errors.name}
+                    />
+                    <Input
+                      name="price"
+                      label="Preço *"
+                      type="number"
+                      value={price}
+                      onChange={(e) => setPrice(Number(e.target.value))}
+                      isInvalid={errors.price}
+                    />
+                  </SimpleGrid>
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
+                  >
+                    <Input
+                      name="description"
+                      label="Descrição"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      isInvalid={errors.description}
+                    />
+                  </SimpleGrid>
+                </VStack>
 
-            <Flex mt="8" justify="flex-end">
-              <HStack spacing="4">
-                <Link href={`/products/${product.id}`} passHref>
-                  <Button colorScheme="whiteAlpha" as="a">
-                    Cancelar
-                  </Button>
-                </Link>
-                <Button
-                  colorScheme="blue"
-                  onClick={handleSubmit}
-                  leftIcon={<Icon as={RiSaveLine} fontSize="20" />}
-                >
-                  Salvar
-                </Button>
-              </HStack>
-            </Flex>
+                <Flex mt="8" justify="flex-end">
+                  <HStack spacing="4">
+                    <Link href={`/products/${id}`} passHref>
+                      <Button colorScheme="whiteAlpha" as="a">
+                        Cancelar
+                      </Button>
+                    </Link>
+                    <Button
+                      colorScheme="blue"
+                      onClick={handleSubmit}
+                      leftIcon={<Icon as={RiSaveLine} fontSize="20" />}
+                    >
+                      Salvar
+                    </Button>
+                  </HStack>
+                </Flex>
+              </>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -219,19 +233,3 @@ const EditProduct: NextPage<EditProductProps> = ({ product }) => {
 };
 
 export default EditProduct;
-
-export const getServerSideProps: GetServerSideProps = async ({ params }) => {
-  try {
-    const id = params?.id;
-    const response = await api.get<Product>(`/products/${id}`);
-
-    return {
-      props: { product: response.data },
-    };
-  } catch {
-    return {
-      props: {},
-      notFound: true,
-    };
-  }
-};

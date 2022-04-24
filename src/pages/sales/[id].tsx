@@ -1,4 +1,4 @@
-import type { GetStaticPaths, GetStaticProps, NextPage } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import {
@@ -9,49 +9,60 @@ import {
   HStack,
   Button,
   SimpleGrid,
+  CircularProgress,
 } from "@chakra-ui/react";
 import { RiPencilLine } from "react-icons/ri";
 
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
-import { api } from "../../services/api";
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
-}
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth, User } from "../../contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
 
 interface Product {
   id: string;
   name: string;
   description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
+  price: number;
 }
 
 interface Sale {
   id: string;
-  productId: string;
   product: Product;
-  customer: Client;
-  customerId: string;
-  saleDate: string;
+  user: User;
+  createdAt: string;
   quantity: number;
 }
 
-interface ShowSaleProps {
-  sale: Sale;
-}
+const ShowSale: NextPage = () => {
+  const [sale, setSale] = useState<Sale>();
+  const [loading, setLoading] = useState(false);
+  const { authLoading, isAdmin, token } = useAuth();
+  const { client } = useApi();
+  const router = useRouter();
+  const { id } = router.query;
 
-const ShowSale: NextPage<ShowSaleProps> = ({ sale }) => {
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    getSale();
+  }, [client]);
+
+  const getSale = async () => {
+    if (client && id) {
+      setLoading(true);
+      const response = await client.get<Sale>(`/sales/${id}`);
+      setSale(response.data);
+      setLoading(false);
+    }
+  };
+
   const formatDate = (date: string) => {
     const d = new Date(date);
     return `${d.getDate() + 1}/${("0" + (d.getMonth() + 1)).slice(
@@ -71,56 +82,79 @@ const ShowSale: NextPage<ShowSaleProps> = ({ sale }) => {
           <Sidebar />
 
           <Box flex="1" borderRadius={8} bg="gray.800" p={["6", "8"]}>
-            <VStack spacing="8">
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="product"
-                  label="Produto"
-                  isRequired
-                  value={sale.product.name}
-                  isReadOnly
+            {loading ? (
+              <Flex w="100%" h="100%">
+                <CircularProgress
+                  mx="auto"
+                  isIndeterminate
+                  mt="auto"
+                  mb="auto"
                 />
-                <Input
-                  name="customer"
-                  label="Cliente"
-                  value={sale.customer.name}
-                  isReadOnly
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="sale"
-                  label="Data de Venda"
-                  value={formatDate(sale.saleDate)}
-                  isReadOnly
-                />
-                <Input
-                  name="quantity"
-                  label="Quantidade"
-                  value={sale.quantity}
-                  isReadOnly
-                />
-              </SimpleGrid>
-            </VStack>
-
-            <Flex mt="8" justify="flex-end">
-              <HStack spacing="4">
-                <Link href="/sales" passHref>
-                  <Button colorScheme="whiteAlpha" as="a">
-                    Voltar
-                  </Button>
-                </Link>
-                <Link href={`/sales/edit/${sale.id}`} passHref>
-                  <Button
-                    as="a"
-                    colorScheme="green"
-                    leftIcon={<Icon as={RiPencilLine} fontSize="20" />}
+              </Flex>
+            ) : (
+              <>
+                <VStack spacing="8">
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
                   >
-                    Editar
-                  </Button>
-                </Link>
-              </HStack>
-            </Flex>
+                    <Input
+                      name="product"
+                      label="Produto"
+                      isRequired
+                      value={sale?.product?.name}
+                      isReadOnly
+                    />
+                    <Input
+                      name="customer"
+                      label="Cliente"
+                      value={`${sale?.user?.firstName} ${sale?.user?.lastName}`}
+                      isReadOnly
+                    />
+                  </SimpleGrid>
+                  <SimpleGrid
+                    minChildWidth="240px"
+                    spacing={["6", "8"]}
+                    w="100%"
+                  >
+                    <Input
+                      name="sale"
+                      label="Data de Venda"
+                      value={formatDate(sale?.createdAt || "")}
+                      isReadOnly
+                    />
+                    <Input
+                      name="quantity"
+                      label="Quantidade"
+                      value={sale?.quantity}
+                      isReadOnly
+                    />
+                  </SimpleGrid>
+                </VStack>
+
+                <Flex mt="8" justify="flex-end">
+                  <HStack spacing="4">
+                    <Link href="/sales" passHref>
+                      <Button colorScheme="whiteAlpha" as="a">
+                        Voltar
+                      </Button>
+                    </Link>
+                    {isAdmin && (
+                      <Link href={`/sales/edit/${sale?.id}`} passHref>
+                        <Button
+                          as="a"
+                          colorScheme="green"
+                          leftIcon={<Icon as={RiPencilLine} fontSize="20" />}
+                        >
+                          Editar
+                        </Button>
+                      </Link>
+                    )}
+                  </HStack>
+                </Flex>
+              </>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -129,24 +163,3 @@ const ShowSale: NextPage<ShowSaleProps> = ({ sale }) => {
 };
 
 export default ShowSale;
-
-export const getStaticPaths: GetStaticPaths = async () => {
-  return { paths: [], fallback: "blocking" };
-};
-
-export const getStaticProps: GetStaticProps = async ({ params }) => {
-  try {
-    const id = params?.id;
-    const response = await api.get<Sale>(`/sales/${id}`);
-
-    return {
-      props: { sale: response.data },
-      revalidate: 60 * 60 * 12, // 12h
-    };
-  } catch {
-    return {
-      props: {},
-      notFound: true,
-    };
-  }
-};

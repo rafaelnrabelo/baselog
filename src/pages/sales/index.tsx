@@ -1,4 +1,4 @@
-import type { NextPage, GetServerSideProps } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -14,58 +14,70 @@ import {
   Td,
   Th,
   Tbody,
-  Text,
   useBreakpointValue,
   useToast,
+  CircularProgress,
 } from "@chakra-ui/react";
 import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
-import { api } from "../../services/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth, User } from "../../contexts/AuthContext";
 
 interface Sale {
   id: string;
-  productId: string;
   product: Product;
-  customer: Client;
-  customerId: string;
-  saleDate: string;
+  user: User;
+  createdAt: string;
   quantity: number;
-}
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
 }
 
 interface Product {
   id: string;
   name: string;
   description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
+  price: number;
 }
 
-interface SaleListProps {
-  baseSales: Sale[];
-}
-
-const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
-  const [sales, setSales] = useState(baseSales || []);
+const SaleList: NextPage = () => {
+  const [sales, setSales] = useState<Sale[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { client } = useApi();
+  const { token, authLoading, isAdmin, user } = useAuth();
 
   const isWideVersion = useBreakpointValue({
     base: false,
     lg: true,
   });
+
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    getSales();
+    console.log(user);
+  }, [client, user]);
+
+  const getSales = async () => {
+    if (client) {
+      setLoading(true);
+      let response = { data: [] as Sale[] };
+      if (isAdmin) {
+        response = await client.get<Sale[]>("/sales");
+      } else {
+        if (user) {
+          response = await client.get<Sale[]>(`/sales/users/${user?.id}`);
+        }
+      }
+      setSales(response.data);
+      setLoading(false);
+    }
+  };
 
   const formatDate = (date: string) => {
     const d = new Date(date);
@@ -79,7 +91,7 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
 
   const handleProductDelete = async (saleId: string) => {
     try {
-      await api.delete(`/sales/${saleId}`);
+      await client.delete(`/sales/${saleId}`);
       const newSale = sales.filter((sale) => sale.id !== saleId);
       setSales(newSale);
       toast({
@@ -92,7 +104,6 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
     } catch (error: any) {
       toast({
         title: "Falha ao remover venda, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -117,65 +128,75 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
               <Heading size="lg" fontWeight="normal">
                 Vendas
               </Heading>
-              <Link href="/sales/create" passHref>
-                <Button
-                  as="a"
-                  size="sm"
-                  fontSize="sm"
-                  colorScheme="blue"
-                  leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-                >
-                  Criar novo
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link href="/sales/create" passHref>
+                  <Button
+                    as="a"
+                    size="sm"
+                    fontSize="sm"
+                    colorScheme="blue"
+                    leftIcon={<Icon as={RiAddLine} fontSize="20" />}
+                  >
+                    Criar novo
+                  </Button>
+                </Link>
+              )}
             </Flex>
 
-            <Table colorScheme="whiteAlpha">
-              <Thead>
-                <Tr>
-                  <Th>Produto</Th>
-                  <Th>Cliente</Th>
-                  {isWideVersion && <Th>Data de venda</Th>}
-                  {isWideVersion && <Th w="8"></Th>}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {sales.map((sale) => (
-                  <Tr
-                    key={sale.id}
-                    role="link"
-                    cursor="pointer"
-                    transition="backdrop-filter 0.2s"
-                    _hover={{
-                      backdropFilter: "brightness(1.15)",
-                    }}
-                    onClick={() => router.push(`/sales/${sale.id}`)}
-                  >
-                    <Td fontWeight="bold">{sale.product.name}</Td>
-                    <Td fontWeight="bold">{sale.customer.name}</Td>
-                    {isWideVersion && <Td>{formatDate(sale.saleDate)}</Td>}
-                    {isWideVersion && (
-                      <Td>
-                        <Button
-                          as="a"
-                          size="sm"
-                          fontSize="sm"
-                          cursor="pointer"
-                          colorScheme="red"
-                          leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleProductDelete(sale.id);
-                          }}
-                        >
-                          Deletar
-                        </Button>
-                      </Td>
-                    )}
+            {loading ? (
+              <Flex w="100%" mt={20}>
+                <CircularProgress mx="auto" isIndeterminate />
+              </Flex>
+            ) : (
+              <Table colorScheme="whiteAlpha">
+                <Thead>
+                  <Tr>
+                    <Th>Produto</Th>
+                    <Th>Cliente</Th>
+                    {isWideVersion && <Th>Data de venda</Th>}
+                    {isWideVersion && isAdmin && <Th w="8"></Th>}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
+                </Thead>
+                <Tbody>
+                  {sales?.map((sale) => (
+                    <Tr
+                      key={sale.id}
+                      role="link"
+                      cursor="pointer"
+                      transition="backdrop-filter 0.2s"
+                      _hover={{
+                        backdropFilter: "brightness(1.15)",
+                      }}
+                      onClick={() => router.push(`/sales/${sale.id}`)}
+                    >
+                      <Td fontWeight="bold">{sale?.product?.name}</Td>
+                      <Td fontWeight="bold">{sale?.user?.firstName}</Td>
+                      {isWideVersion && <Td>{formatDate(sale?.createdAt)}</Td>}
+                      {isWideVersion && isAdmin && (
+                        <Td>
+                          <Button
+                            as="a"
+                            size="sm"
+                            fontSize="sm"
+                            cursor="pointer"
+                            colorScheme="red"
+                            leftIcon={
+                              <Icon as={RiDeleteBinLine} fontSize="16" />
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProductDelete(sale.id);
+                            }}
+                          >
+                            Deletar
+                          </Button>
+                        </Td>
+                      )}
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -184,11 +205,3 @@ const SaleList: NextPage<SaleListProps> = ({ baseSales }) => {
 };
 
 export default SaleList;
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const response = await api.get<Sale[]>("/sales");
-
-  return {
-    props: { baseSales: response.data },
-  };
-};

@@ -1,4 +1,4 @@
-import type { NextPage, GetServerSideProps } from "next";
+import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -14,34 +14,23 @@ import {
   Td,
   Th,
   Tbody,
-  Text,
   useBreakpointValue,
   useToast,
+  CircularProgress,
 } from "@chakra-ui/react";
 import { RiAddLine, RiDeleteBinLine } from "react-icons/ri";
 
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
-import { api } from "../../services/api";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth, User } from "../../contexts/AuthContext";
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
-}
+const ClientList: NextPage = () => {
+  const [clients, setClients] = useState<User[]>([]);
+  const [loading, setLoading] = useState(false);
 
-interface ClientListProps {
-  baseClients: Client[];
-}
-
-const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
-  const [clients, setClients] = useState(baseClients || []);
+  const { client: apiClient } = useApi();
 
   const isWideVersion = useBreakpointValue({
     base: false,
@@ -50,10 +39,30 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
 
   const toast = useToast();
   const router = useRouter();
+  const { token, authLoading } = useAuth();
+
+  useEffect(() => {
+    getClients();
+  }, [apiClient]);
+
+  const getClients = async () => {
+    if (apiClient) {
+      setLoading(true);
+      const response = await apiClient.get<User[]>("/users");
+      setClients(response.data);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
 
   const handleProductDelete = async (clienteId: string) => {
     try {
-      await api.delete(`/customers/${clienteId}`);
+      await apiClient.delete(`/users/${clienteId}`);
       const newClients = clients.filter((client) => client.id !== clienteId);
       setClients(newClients);
       toast({
@@ -66,7 +75,6 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
     } catch (error: any) {
       toast({
         title: "Falha ao remover cliente, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -91,65 +99,62 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
               <Heading size="lg" fontWeight="normal">
                 Clientes
               </Heading>
-              <Link href="/clients/create" passHref>
-                <Button
-                  as="a"
-                  size="sm"
-                  fontSize="sm"
-                  colorScheme="blue"
-                  leftIcon={<Icon as={RiAddLine} fontSize="20" />}
-                >
-                  Criar novo
-                </Button>
-              </Link>
             </Flex>
 
-            <Table colorScheme="whiteAlpha">
-              <Thead>
-                <Tr>
-                  <Th>Nome</Th>
-                  <Th>E-mail</Th>
-                  {isWideVersion && <Th>CPF</Th>}
-                  {isWideVersion && <Th w="8"></Th>}
-                </Tr>
-              </Thead>
-              <Tbody>
-                {clients.map((client) => (
-                  <Tr
-                    key={client.id}
-                    role="link"
-                    cursor="pointer"
-                    transition="backdrop-filter 0.2s"
-                    _hover={{
-                      backdropFilter: "brightness(1.15)",
-                    }}
-                    onClick={() => router.push(`/clients/${client.id}`)}
-                  >
-                    <Td fontWeight="bold">{client.name}</Td>
-                    <Td>{client.email}</Td>
-                    {isWideVersion && <Td>{client.cpf}</Td>}
-                    {isWideVersion && (
-                      <Td>
-                        <Button
-                          as="a"
-                          size="sm"
-                          fontSize="sm"
-                          cursor="pointer"
-                          colorScheme="red"
-                          leftIcon={<Icon as={RiDeleteBinLine} fontSize="16" />}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleProductDelete(client.id);
-                          }}
-                        >
-                          Deletar
-                        </Button>
-                      </Td>
-                    )}
+            {loading ? (
+              <Flex w="100%" mt={20}>
+                <CircularProgress mx="auto" isIndeterminate />
+              </Flex>
+            ) : (
+              <Table colorScheme="whiteAlpha">
+                <Thead>
+                  <Tr>
+                    <Th>Nome</Th>
+                    <Th>E-mail</Th>
+                    {isWideVersion && <Th w="8"></Th>}
                   </Tr>
-                ))}
-              </Tbody>
-            </Table>
+                </Thead>
+                <Tbody>
+                  {clients.map((client) => (
+                    <Tr
+                      key={client.id}
+                      role="link"
+                      cursor="pointer"
+                      transition="backdrop-filter 0.2s"
+                      _hover={{
+                        backdropFilter: "brightness(1.15)",
+                      }}
+                      onClick={() => router.push(`/clients/${client.id}`)}
+                    >
+                      <Td fontWeight="bold">
+                        {client.firstName} {client.lastName}
+                      </Td>
+                      <Td>{client.email}</Td>
+                      {isWideVersion && (
+                        <Td>
+                          <Button
+                            as="a"
+                            size="sm"
+                            fontSize="sm"
+                            cursor="pointer"
+                            colorScheme="red"
+                            leftIcon={
+                              <Icon as={RiDeleteBinLine} fontSize="16" />
+                            }
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleProductDelete(client.id);
+                            }}
+                          >
+                            Deletar
+                          </Button>
+                        </Td>
+                      )}
+                    </Tr>
+                  ))}
+                </Tbody>
+              </Table>
+            )}
           </Box>
         </Flex>
       </Box>
@@ -158,11 +163,3 @@ const ClientList: NextPage<ClientListProps> = ({ baseClients }) => {
 };
 
 export default ClientList;
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const response = await api.get<Client[]>("/customers");
-
-  return {
-    props: { baseClients: response.data },
-  };
-};

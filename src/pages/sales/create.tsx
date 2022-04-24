@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NextPage, GetServerSideProps } from "next";
 import Head from "next/head";
 import Link from "next/link";
@@ -21,62 +21,81 @@ import validator from "validator";
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
-import { api } from "../../services/api";
 
 import { Select } from "../../components/Form/Select";
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth, User } from "../../contexts/AuthContext";
 interface FormErrors {
   productId?: boolean;
-  customerId?: boolean;
-  saleDate?: boolean;
+  userId?: boolean;
   quantity?: boolean;
-}
-
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  cpf: string;
-  birthDate: string;
-  gender: string;
-  phone: string;
-  address: string;
 }
 
 interface Product {
   id: string;
   name: string;
   description?: string;
-  purchasePrice: number;
-  salePrice: number;
-  quantity: number;
-}
-interface SalesListProps {
-  baseProducts: Product[];
-  baseClients: Client[];
+  price: number;
 }
 
-const CreateProduct: NextPage<SalesListProps> = ({
-  baseClients,
-  baseProducts,
-}) => {
-  const [clients] = useState<Client[]>(baseClients || []);
-  const [products] = useState<Product[]>(baseProducts || []);
+const CreateProduct: NextPage = () => {
+  const [loading, setLoading] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
 
   const [productId, setProductId] = useState<string>();
-  const [customerId, setCustomerId] = useState<string>();
-  const [saleDate, setSaleDate] = useState<string>();
+  const [userId, setUserId] = useState<string>();
   const [quantity, setQuantity] = useState<number>();
 
   const [errors, setErrors] = useState<FormErrors>({});
 
+  const { client } = useApi();
+  const { authLoading, isAdmin, token } = useAuth();
+
   const router = useRouter();
   const toast = useToast();
+
+  useEffect(() => {
+    if (!token && !authLoading) {
+      router.replace("/");
+    }
+  }, [token, authLoading]);
+
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.replace("/sales");
+    }
+  }, [isAdmin, authLoading]);
+
+  useEffect(() => {
+    getItems();
+  }, [client]);
+
+  const getItems = async () => {
+    setLoading(true);
+    await getProducts();
+    await getUsers();
+    setLoading(false);
+  };
+
+  const getProducts = async () => {
+    if (client) {
+      const response = await client.get<Product[]>(`/products`);
+      setProducts(response.data);
+    }
+  };
+
+  const getUsers = async () => {
+    if (client) {
+      const response = await client.get<User[]>(`/users`);
+      setUsers(response.data);
+    }
+  };
 
   const handleValidation = () => {
     const requiredData = {
       productId,
-      customerId,
-      saleDate,
+      userId,
       quantity,
     };
     const newErrors: FormErrors = {};
@@ -103,12 +122,12 @@ const CreateProduct: NextPage<SalesListProps> = ({
       setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     try {
-      await api.post("/sales", {
+      await client.post("/sales", {
         productId,
-        customerId,
-        saleDate,
+        userId,
         quantity,
       });
 
@@ -123,7 +142,6 @@ const CreateProduct: NextPage<SalesListProps> = ({
     } catch (error: any) {
       toast({
         title: "Falha ao criar a venda, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -164,26 +182,18 @@ const CreateProduct: NextPage<SalesListProps> = ({
                   isInvalid={errors.productId}
                 />
                 <Select
-                  name="customerId"
+                  name="userId"
                   label="Clientes *"
-                  value={customerId}
-                  onChange={(e) => setCustomerId(e.target.value)}
-                  options={clients.map((client) => ({
-                    label: client.name,
-                    value: client.id,
+                  value={userId}
+                  onChange={(e) => setUserId(e.target.value)}
+                  options={users?.map((user) => ({
+                    label: `${user.firstName} ${user.lastName}`,
+                    value: user.id,
                   }))}
-                  isInvalid={errors.customerId}
+                  isInvalid={errors.userId}
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="saleDate"
-                  label="Data de Venda *"
-                  type="date"
-                  value={saleDate}
-                  onChange={(e) => setSaleDate(e.target.value)}
-                  isInvalid={errors.saleDate}
-                />
                 <Input
                   name="quantity"
                   label="Quantidade *"
@@ -219,15 +229,3 @@ const CreateProduct: NextPage<SalesListProps> = ({
 };
 
 export default CreateProduct;
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  const resultClients = await api.get<Client[]>("/customers");
-  const resultProducts = await api.get<Product[]>("/products");
-
-  return {
-    props: {
-      baseClients: resultClients.data,
-      baseProducts: resultProducts.data,
-    },
-  };
-};

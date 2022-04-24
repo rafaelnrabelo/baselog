@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { NextPage } from "next";
 import Head from "next/head";
 import Link from "next/link";
@@ -21,33 +21,37 @@ import validator from "validator";
 import { Header } from "../../components/Header";
 import { Sidebar } from "../../components/Sidebar";
 import { Input } from "../../components/Form/Input";
-import { api } from "../../services/api";
+import { useApi } from "../../contexts/ApiContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface FormErrors {
   name?: boolean;
   description?: boolean;
-  quantity?: boolean;
-  purchasePrice?: boolean;
-  salePrice?: boolean;
+  price?: boolean;
 }
 
 const CreateProduct: NextPage = () => {
   const [name, setName] = useState<string>();
   const [description, setDescription] = useState<string>();
-  const [quantity, setQuantity] = useState<number>();
-  const [purchasePrice, setPurchasePrice] = useState<number>();
-  const [salePrice, setSalePrice] = useState<number>();
+  const [price, setPrice] = useState<number>();
   const [errors, setErrors] = useState<FormErrors>({});
+
+  const { client } = useApi();
+  const { authLoading, isAdmin } = useAuth();
 
   const router = useRouter();
   const toast = useToast();
 
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      router.replace("/products");
+    }
+  }, [isAdmin, authLoading]);
+
   const handleValidation = () => {
     const requiredData = {
       name,
-      quantity,
-      purchasePrice,
-      salePrice,
+      price,
     };
     const newErrors: FormErrors = {};
     Object.keys(requiredData).forEach((key) => {
@@ -60,16 +64,8 @@ const CreateProduct: NextPage = () => {
       }
     });
 
-    if (!validator.isInt(String(quantity || ""))) {
-      newErrors.quantity = true;
-    }
-
-    if (!validator.isNumeric(String(purchasePrice || ""))) {
-      newErrors.purchasePrice = true;
-    }
-
-    if (!validator.isNumeric(String(salePrice || ""))) {
-      newErrors.salePrice = true;
+    if (!validator.isNumeric(String(price || ""))) {
+      newErrors.price = true;
     }
 
     return newErrors;
@@ -81,14 +77,13 @@ const CreateProduct: NextPage = () => {
       setErrors(newErrors);
       return;
     }
+    setErrors({});
 
     try {
-      await api.post("/products", {
+      await client.post("/products", {
         name,
         description,
-        quantity,
-        purchasePrice,
-        salePrice,
+        price: price?.toFixed(2),
       });
 
       toast({
@@ -102,7 +97,6 @@ const CreateProduct: NextPage = () => {
     } catch (error: any) {
       toast({
         title: "Falha ao criar produto, tente novamente.",
-        description: error.response.data.message,
         status: "error",
         duration: 9000,
         position: "top-right",
@@ -140,12 +134,12 @@ const CreateProduct: NextPage = () => {
                   isInvalid={errors.name}
                 />
                 <Input
-                  name="quantity"
-                  label="Quantidade em Estoque *"
+                  name="purchasePrice"
+                  label="Preço *"
                   type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  isInvalid={errors.quantity}
+                  value={price}
+                  onChange={(e) => setPrice(Number(e.target.value))}
+                  isInvalid={errors.price}
                 />
               </SimpleGrid>
               <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
@@ -155,24 +149,6 @@ const CreateProduct: NextPage = () => {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   isInvalid={errors.description}
-                />
-              </SimpleGrid>
-              <SimpleGrid minChildWidth="240px" spacing={["6", "8"]} w="100%">
-                <Input
-                  name="purchasePrice"
-                  label="Preço de Compra *"
-                  type="number"
-                  value={purchasePrice}
-                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                  isInvalid={errors.purchasePrice}
-                />
-                <Input
-                  name="salePrice"
-                  label="Preço de Venda *"
-                  type="number"
-                  value={salePrice}
-                  onChange={(e) => setSalePrice(Number(e.target.value))}
-                  isInvalid={errors.salePrice}
                 />
               </SimpleGrid>
             </VStack>

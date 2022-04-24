@@ -1,231 +1,140 @@
-import type { NextPage, GetServerSideProps } from "next";
-import { useState } from "react";
+import type { NextPage } from "next";
 import Head from "next/head";
-import dynamic from "next/dynamic";
 import {
-  Box,
+  Button,
   Flex,
-  VStack,
-  Text,
-  Stat,
-  StatLabel,
-  StatNumber,
-  StatHelpText,
-  IconButton,
-  Icon,
-  theme,
+  Link,
+  Stack,
+  useBreakpointValue,
+  useToast,
 } from "@chakra-ui/react";
-import { RiArrowLeftSLine, RiArrowRightSLine } from "react-icons/ri";
 
-import { ApexOptions } from "apexcharts";
+import { Input } from "../components/Form/Input";
+import { useAuth } from "../contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/router";
+import validator from "validator";
+import { Logo } from "../components/Header/Logo";
 
-const Chart = dynamic(() => import("react-apexcharts"), {
-  ssr: false,
-});
-
-import { Header } from "../components/Header";
-import { Sidebar } from "../components/Sidebar";
-import { api } from "../services/api";
-import { toPrecision } from "@chakra-ui/utils";
-
-interface PercentItem {
-  name: string;
-  total: number;
+interface FormErrors {
+  email?: boolean;
+  password?: boolean;
 }
 
-interface DashboardProps {
-  baseAvgTicket: number;
-  percentChart: PercentItem[];
-}
+const Login: NextPage = () => {
+  const { authLoading, signIn, token } = useAuth();
+  const router = useRouter();
+  const toast = useToast();
 
-const Dashboard: NextPage<DashboardProps> = ({
-  baseAvgTicket,
-  percentChart,
-}) => {
-  const [avgTicket, setAvgTicket] = useState(baseAvgTicket);
-  const [month, setMonth] = useState(new Date());
+  const [email, setEmail] = useState<string>();
+  const [password, setPassword] = useState<string>();
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  const moneyParser = new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  });
+  useEffect(() => {
+    if (token) {
+      router.replace("/products");
+    }
+  }, [token]);
 
-  const monthParser = new Intl.DateTimeFormat("pt-BR", {
-    year: "numeric",
-    month: "long",
-  });
+  const handleValidation = () => {
+    const newErrors: FormErrors = {};
+    if (validator.isEmpty(email || "")) {
+      newErrors.email = true;
+    }
+    if (!validator.isEmail(email || "")) {
+      newErrors.email = true;
+    }
 
-  const getAvgTicket = async (newDate: Date) => {
-    const initialDate = new Date(newDate.getFullYear(), newDate.getMonth(), 1);
-    const finalDate = new Date(
-      newDate.getFullYear(),
-      newDate.getMonth() + 1,
-      0
-    );
+    if (validator.isEmpty(password || "")) {
+      newErrors.password = true;
+    }
+    if (!validator.isLength(password || "", { min: 8, max: 60 })) {
+      newErrors.password = true;
+    }
 
-    const response = await api.get("/avg", {
-      params: {
-        initialDate,
-        finalDate,
-      },
-    });
-    setAvgTicket(response.data?.avg || 0);
+    return newErrors;
   };
 
-  const handleNextMonth = () => {
-    const newDate = new Date(month.getFullYear(), month.getMonth() + 1, 1);
-    setMonth(newDate);
-    getAvgTicket(newDate);
-  };
+  const handleLogin = async () => {
+    const newErrors = handleValidation();
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+    setErrors({});
 
-  const handlePreviousMonth = () => {
-    const newDate = new Date(month.getFullYear(), month.getMonth() - 1, 1);
-    setMonth(newDate);
-    getAvgTicket(newDate);
-  };
-
-  const series = [
-    {
-      name: "Porcentagem",
-      data: percentChart.map((percent) => Math.round(percent.total * 100)),
-    },
-  ];
-
-  const options: ApexOptions = {
-    chart: {
-      toolbar: {
-        show: false,
-      },
-      zoom: {
-        enabled: false,
-      },
-      foreColor: theme.colors.gray[500],
-    },
-    grid: {
-      show: false,
-    },
-    dataLabels: {
-      enabled: false,
-    },
-    tooltip: {
-      enabled: true,
-      theme: "dark",
-      y: {
-        formatter: (val) => `${val}%`,
-      },
-    },
-    xaxis: {
-      type: "category",
-      axisBorder: {
-        color: theme.colors.gray[600],
-      },
-      axisTicks: {
-        color: theme.colors.gray[600],
-      },
-      categories: percentChart.map((percent) => percent.name),
-    },
-    yaxis: {
-      max: 100,
-    },
-    fill: {
-      opacity: 0.4,
-      type: "gradient",
-      gradient: {
-        shade: "dark",
-        opacityFrom: 0.7,
-        opacityTo: 0.4,
-      },
-    },
+    try {
+      await signIn({ email: email || "", password: password || "" });
+      router.replace("/products");
+    } catch (error) {
+      toast({
+        title: "Falha ao fazer login, tente novamente.",
+        status: "error",
+        duration: 9000,
+        position: "top-right",
+        isClosable: true,
+      });
+    }
   };
 
   return (
     <>
       <Head>
-        <title>Dashboard | baselog</title>
+        <title>Login | baselog</title>
       </Head>
-      <Flex direction="column" h="100vh">
-        <Header />
+      <Flex
+        w="100vw"
+        h="100vh"
+        align="center"
+        justify="center"
+        flexDir={{ lg: "row", base: "column" }}
+      >
+        <Flex mb={{ lg: 0, base: 10 }}>
+          <Logo w={{ lg: 64, base: "auto" }} fontSize="3xl" />
+        </Flex>
+        <Flex
+          as="form"
+          w="100%"
+          maxW={360}
+          bg="gray.800"
+          p={8}
+          borderRadius={8}
+          flexDir="column"
+        >
+          <Stack spacing="4">
+            <Input
+              name="email"
+              label="E-mail"
+              type="email"
+              onChange={(e) => setEmail(e.target.value)}
+              isInvalid={errors.email}
+            />
+            <Input
+              name="password"
+              label="Senha"
+              type="password"
+              onChange={(e) => setPassword(e.target.value)}
+              isInvalid={errors.password}
+            />
+          </Stack>
 
-        <Flex w="100%" mb="6" maxW={1480} mx="auto" px="6">
-          <Sidebar />
+          <Button
+            onClick={handleLogin}
+            mt={6}
+            colorScheme="blue"
+            size="lg"
+            isLoading={authLoading}
+          >
+            Entrar
+          </Button>
 
-          <VStack flex="1" align="flex-start" mb="4">
-            <Box
-              p={["6", "8"]}
-              bg="gray.800"
-              borderRadius={8}
-              pb="4"
-              w="100%"
-              mb="4"
-              display="flex"
-              alignItems="center"
-            >
-              <IconButton
-                colorScheme="blue"
-                aria-label="Anterior"
-                icon={<Icon as={RiArrowLeftSLine} />}
-                onClick={handlePreviousMonth}
-              />
-              <Stat display="flex" justifyContent="center" textAlign="center">
-                <StatHelpText textTransform="capitalize" fontSize={16}>
-                  {monthParser.format(month)}
-                </StatHelpText>
-                <StatLabel fontSize={20}>Ticket Médio</StatLabel>
-                <StatNumber fontSize={36}>
-                  {moneyParser.format(avgTicket)}
-                </StatNumber>
-              </Stat>
-              <IconButton
-                colorScheme="blue"
-                aria-label="Próximo"
-                icon={<Icon as={RiArrowRightSLine} />}
-                onClick={handleNextMonth}
-              />
-            </Box>
-            <Box p={["6", "8"]} bg="gray.800" borderRadius={8} w="100%">
-              <Text fontSize="lg" mb="4">
-                Porcentagem de Vendas Total
-              </Text>
-              <Chart
-                type="bar"
-                height={250}
-                options={options}
-                series={series}
-              />
-            </Box>
-          </VStack>
+          <Link mx="auto" mt={5} href={"/signup"}>
+            Não tem conta? <strong>Clique aqui</strong>
+          </Link>
         </Flex>
       </Flex>
     </>
   );
 };
 
-export default Dashboard;
-
-export const getServerSideProps: GetServerSideProps = async () => {
-  try {
-    const date = new Date();
-    const initialDate = new Date(date.getFullYear(), date.getMonth(), 1);
-    const finalDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
-
-    const avgResponse = await api.get("/avg", {
-      params: {
-        initialDate,
-        finalDate,
-      },
-    });
-
-    const percentResponse = await api.get("/percent");
-
-    return {
-      props: {
-        baseAvgTicket: avgResponse.data?.avg || 0,
-        percentChart: percentResponse.data,
-      },
-    };
-  } catch {
-    return {
-      props: { baseAvgTicket: 0, percentChart: [] },
-    };
-  }
-};
+export default Login;
